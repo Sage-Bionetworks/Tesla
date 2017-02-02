@@ -37,13 +37,13 @@ def hgncRestCall(path):
     if response['status'] == '200':
         data = json.loads(content)
         if len(data['response']['docs']) == 0:
-            return(False, None)
+            return(False, [None])
         else:
             #print(len(data['response']['docs']))
             mapped = [symbol['symbol'] for symbol in data['response']['docs']]
             return(True, mapped)
     else:
-        return(False, None)
+        return(False, [None])
 
 # Validation of gene names
 def validateSymbol(gene, returnMapping=False):
@@ -63,11 +63,11 @@ def validateSymbol(gene, returnMapping=False):
         verified, symbol = hgncRestCall(path)
     if not verified:
         path = '/fetch/alias_symbol/%s' %  gene
-        verified, symbol = hgncRestCall(path)       
+        verified, symbol = hgncRestCall(path)
     if gene in symbol:
         return(True)
     else:
-        if symbol is None:
+        if symbol[0] is None:
             print("%s cannot be remapped. Please correct." % gene)
         else:
             #if "MLL4", then the HUGO symbol should be KMT2D and KMT2B
@@ -86,6 +86,11 @@ def checkType(submission, cols, colType):
 		assert all(submission[col].apply(lambda x: isinstance(x, colType))), "All values in %s column must be type: %s" % (col, re.sub(".+['](.+)['].+","\\1",str(colType)))
 
 def validate_1(submission_filepath):
+	"""
+	Validates first TESLA file
+
+	:param submission_filepath: Path of submission file TESLA_OUT_1.csv
+	"""
 	#CHECK: Correct filename
 	assert os.path.basename(submission_filepath) == "TESLA_OUT_1.csv", "Submission file must be named TESLA_OUT_1.csv"
 	required_cols = pd.Series(["VAR_ID","GENE","CHROM","START","END","STRAND","CLASS","REFALLELE","MUTALLELE","REFCOUNT_T","MUTCOUNT_T",
@@ -96,6 +101,7 @@ def validate_1(submission_filepath):
 	CLASS_categories = ['intron','missense','silent','splice_site','in_frame_deletion','in_frame_insertion',
 						'frame_shift_deletion','frame_shift_insertion',
 						'nonsense_mutation','structural_variant','splice_isoform','other']
+	#NO duplicated VAR_ID
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
@@ -116,19 +122,49 @@ def validate_1(submission_filepath):
     return(True,"Passed Validation")
 
 
-def validate_2(submission_filepath, goldstandard_path):
-	assert os.path.basename(submission_filepath) == "TESLA_OUT_2.csv", "Submission file must be named TESLA_OUT_1.csv"
+def validate_2(submission_filepath):
+	"""
+	Validates second TESLA file
+
+	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
+	"""
+	#CHECK: Correct filename
+	#VAR_ID have to check out with first file
+	assert os.path.basename(submission_filepath) == "TESLA_OUT_2.csv", "Submission file must be named TESLA_OUT_2.csv"
 	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ"])
 	submission = pd.read_csv(submission_filepath)
+	#CHECK: Required headers must exist in submission
 	assert required_cols.isin(submission.columns), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+
+	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN']
+	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
+	#CHECK: RANK must be ordered from 1 to nrows
+	assert submission.RANK == range(1, len(submission)+1), "RANK column must be sequencial and must start from 1 to the length of the data"
+	#CHECK: integer, string and float columns are correct types
+	checkType(submission, integer_cols, int)
+	checkType(submission, string_cols, str)
+
     return(True,"Passed Validation")
 
 
-def validate_3(submission_filepath, goldstandard_path):
-	assert os.path.basename(submission_filepath) == "TESLA_OUT_3.csv", "Submission file must be named TESLA_OUT_1.csv"
+def validate_3(submission_filepath):
+	"""
+	Validates second TESLA file
+
+	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
+	"""
+	#CHECK: Correct filename
+	assert os.path.basename(submission_filepath) == "TESLA_OUT_3.csv", "Submission file must be named TESLA_OUT_3.csv"
 	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
+	#CHECK: Required headers must exist in submission
 	assert required_cols.isin(submission.columns), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN','STEP_ID']
+	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
+
+	#CHECK: integer, string and float columns are correct types
+	checkType(submission, integer_cols, int)
+	checkType(submission, string_cols, str)
 
     return(True,"Passed Validation")
 
