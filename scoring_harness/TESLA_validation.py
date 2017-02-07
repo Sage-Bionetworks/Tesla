@@ -1,85 +1,91 @@
-import pandas as pd
 import os
 import re
-import httplib2 as http
 import json
+import argparse
+from multiprocessing.dummy import Pool as ThreadPool 
 
 try:
-    from urlparse import urlparse
+	import httplib2 as http
 except ImportError:
-    from urllib.parse import urlparse
-
-from multiprocessing.dummy import Pool as ThreadPool 
+	raise ImportError("Please make sure you have httplib2 installed: pip install httplib2")
+try:
+	import pandas as pd
+except ImportError:
+	raise ImportError("Please make sure you have pandas installed: pip install pandas")
+try:
+	from urlparse import urlparse
+except ImportError:
+	from urllib.parse import urlparse
 
 pool = ThreadPool(4)
 
 #Validate genes
 def hgncRestCall(path):
-    """
-    This function does the rest call to the genenames website
+	"""
+	This function does the rest call to the genenames website
 
-    :params path:     The gene symbol url path to add to the base uri
+	:params path:     The gene symbol url path to add to the base uri
 
-    :returns:         If the symbol exists, returns True and the corrected symbol, otherwise returns False and None.
-    """
-    headers = {'Accept': 'application/json',}
+	:returns:         If the symbol exists, returns True and the corrected symbol, otherwise returns False and None.
+	"""
+	headers = {'Accept': 'application/json',}
 
-    uri = 'http://rest.genenames.org'
+	uri = 'http://rest.genenames.org'
 
-    target = urlparse(uri+path)
-    method = 'GET'
-    body = ''
-    h = http.Http()
-    response, content = h.request(target.geturl(),
-                                  method,
-                                  body,
-                                  headers)
-    if response['status'] == '200':
-        data = json.loads(content)
-        if len(data['response']['docs']) == 0:
-            return(False, [None])
-        else:
-            #print(len(data['response']['docs']))
-            mapped = [symbol['symbol'] for symbol in data['response']['docs']]
-            return(True, mapped)
-    else:
-        return(False, [None])
+	target = urlparse(uri+path)
+	method = 'GET'
+	body = ''
+	h = http.Http()
+	response, content = h.request(target.geturl(),
+								  method,
+								  body,
+								  headers)
+	if response['status'] == '200':
+		data = json.loads(content)
+		if len(data['response']['docs']) == 0:
+			return(False, [None])
+		else:
+			#print(len(data['response']['docs']))
+			mapped = [symbol['symbol'] for symbol in data['response']['docs']]
+			return(True, mapped)
+	else:
+		return(False, [None])
 
 # Validation of gene names
 def validateSymbol(gene, returnMapping=False):
-    """
-    This function does validation of symbols
+	"""
+	This function does validation of symbols
 
-    :params gene:               Gene symbol
-    :params returnMapping:      Return mapping of old gene to new gene
+	:params gene:               Gene symbol
+	:params returnMapping:      Return mapping of old gene to new gene
 
-    :returns:                   Check if the provided gene name is a correct symbol and print out genes 
-                                that need to be remapped or can't be mapped to anything
-    """
-    path = '/fetch/symbol/%s' %  gene
-    verified, symbol = hgncRestCall(path)
-    if not verified:
-        path = '/fetch/prev_symbol/%s' %  gene
-        verified, symbol = hgncRestCall(path)
-    if not verified:
-        path = '/fetch/alias_symbol/%s' %  gene
-        verified, symbol = hgncRestCall(path)
-    if gene in symbol:
-        return(True)
-    else:
-        if symbol[0] is None:
-            print("%s cannot be remapped. Please correct." % gene)
-        else:
-            #if "MLL4", then the HUGO symbol should be KMT2D and KMT2B
-            if len(symbol) > 1:
-                print("%s can be mapped to different symbols: %s. Please correct." % (gene, ", ".join(symbol)))
-            else:
-                print("%s will be remapped to %s" % (gene, symbol[0]))
-                if returnMapping:
-                    return({gene, symbol[0]})
-                else:
-                    return(True)
-        return(False)
+	:returns:                   Check if the provided gene name is a correct symbol and print out genes 
+								that need to be remapped or can't be mapped to anything
+	"""
+	path = '/fetch/symbol/%s' %  gene
+	verified, symbol = hgncRestCall(path)
+	if not verified:
+		path = '/fetch/prev_symbol/%s' %  gene
+		verified, symbol = hgncRestCall(path)
+	if not verified:
+		path = '/fetch/alias_symbol/%s' %  gene
+		verified, symbol = hgncRestCall(path)
+	if gene in symbol:
+		return(True)
+	else:
+		if symbol[0] is None:
+			print("%s cannot be remapped. Please correct." % gene)
+		else:
+			#if "MLL4", then the HUGO symbol should be KMT2D and KMT2B
+			if len(symbol) > 1:
+				print("%s can be mapped to different symbols: %s. Please correct." % (gene, ", ".join(symbol)))
+			else:
+				print("%s will be remapped to %s" % (gene, symbol[0]))
+				if returnMapping:
+					return({gene, symbol[0]})
+				else:
+					return(True)
+		return(False)
 
 def checkType(submission, cols, colType):
 	for col in cols:
@@ -91,8 +97,6 @@ def validate_1(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_1.csv
 	"""
-	#CHECK: Correct filename
-	assert os.path.basename(submission_filepath) == "TESLA_OUT_1.csv", "Submission file must be named TESLA_OUT_1.csv"
 	required_cols = pd.Series(["VAR_ID","GENE","CHROM","START","END","STRAND","CLASS","REFALLELE","MUTALLELE","REFCOUNT_T","MUTCOUNT_T",
 					 "REFCOUNT_N","MUTDEPTH_N","REF_FPKM_T","REF_HTSEQ_T","MUT_FPKM_T","MUT_HTSEQ_T","QUAL","VARID","INFO"])
 	integer_cols = ['VAR_ID','START','END','REFCOUNT_T','MUTCOUNT_T','REFCOUNT_N','MUTDEPTH_N','REF_HTSEQ_T','MUT_HTSEQ_T','QUAL']
@@ -112,14 +116,14 @@ def validate_1(submission_filepath):
 	#CHECK: STRAND must be +/-
 	assert all(submission.STRAND.isin(['+','-'])), "STRAND values must be + or -.  You have: %s" %(", ".join(set(submission.STRAND[~submission.STRAND.isin(['+','-'])])))
 	#CHECK: gene validation
-    assert all(pool.map(validateSymbol, submission.GENE.drop_duplicates())), "All gene symbols in GENE column must be correct"
+	assert all(pool.map(validateSymbol, submission.GENE.drop_duplicates())), "All gene symbols in GENE column must be correct"
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
 	checkType(submission, float_cols, float)
 
-    return(True,"Passed Validation")
+	return(True,"Passed Validation")
 
 
 def validate_2(submission_filepath):
@@ -128,9 +132,7 @@ def validate_2(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
 	"""
-	#CHECK: Correct filename
 	#VAR_ID have to check out with first file
-	assert os.path.basename(submission_filepath) == "TESLA_OUT_2.csv", "Submission file must be named TESLA_OUT_2.csv"
 	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
@@ -144,7 +146,7 @@ def validate_2(submission_filepath):
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
 
-    return(True,"Passed Validation")
+	return(True,"Passed Validation")
 
 
 def validate_3(submission_filepath):
@@ -153,8 +155,6 @@ def validate_3(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
 	"""
-	#CHECK: Correct filename
-	assert os.path.basename(submission_filepath) == "TESLA_OUT_3.csv", "Submission file must be named TESLA_OUT_3.csv"
 	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
@@ -166,9 +166,40 @@ def validate_3(submission_filepath):
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
 
-    return(True,"Passed Validation")
+	return(True,"Passed Validation")
 
 #Validate workflow
-def validate_4(submission_filepath, goldstandard_path):
-	assert os.path.basename(submission_filepath) == "TESLA_OUT_4.csv", "Submission file must be named TESLA_OUT_4.csv"
-    return(True,"Passed Validation")
+def validate_4(submission_filepath):
+	required_cols = pd.Series(["STEP_ID","PREV_STEP_ID","DESC"])
+	submission = pd.read_csv(submission_filepath)
+	#CHECK: Required headers must exist in submission
+	assert required_cols.isin(submission.columns), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	
+	checkType(submission, ["STEP_ID","PREV_STEP_ID"], int)
+	checkType(submission, ["DESC"], str)
+
+	return(True,"Passed Validation")
+
+
+validation_func = {"TESLA_OUT_1.csv":validate_1,
+				   "TESLA_OUT_2.csv":validate_2,
+				   "TESLA_OUT_3.csv":validate_3,
+				   "TESLA_OUT_4.csv":validate_4}
+
+def validate_files(filelist):
+	for filepath in filelist:
+		assert os.path.basename(filepath) in ["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"], "Submission files must be named TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, or TESLA_OUT_4.csv"
+		validation_func[os.path.basename(filepath)](filepath)
+
+def perform_validate(args):
+	validate_files(args.file)
+	print("Passed Validation")
+
+if __name__ == "__main__":
+
+	parser = argparse.ArgumentParser(description='Validate GENIE files')
+	parser.add_argument("file", type=str, nargs="+",
+						help='path to TESLA files')
+	args = parser.parse_args()
+
+	perform_validate(args)
