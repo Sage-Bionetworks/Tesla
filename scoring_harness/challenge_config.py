@@ -22,7 +22,7 @@ ADMIN_USER_IDS = [3324230]
 evaluation_queues = [
     {
         'id':8116290,
-        'goldstandard_path':'path/to/sc1gold.txt'
+        'validation_func':TESLA_val.validate_files
     }
 ]
 evaluation_queue_by_id = {q['id']:q for q in evaluation_queues}
@@ -59,9 +59,6 @@ def validate_submission(syn, evaluation, submission):
     :returns: (True, message) if validated, (False, message) if
               validation fails or throws exception
     """
-    config = evaluation_queue_by_id[int(evaluation.id)]
-    validated, validation_message = config['validation_func'](submission, config['goldstandard_path'])
-
     if 'teamId' in submission:
         team = syn.getTeam(submission.teamId)
         if 'name' in team:
@@ -72,7 +69,6 @@ def validate_submission(syn, evaluation, submission):
         raise AssertionError("Must submit as part of a team and not as an individual")
 
     #Unzip files here
-
     dirname = submission.entity.cacheDir
     try:
         zfile = zipfile.ZipFile(submission.filePath)

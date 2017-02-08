@@ -212,7 +212,8 @@ def validate_files(filelist):
 	order = pd.np.argsort(basenames)
 	validate_VAR_ID(filelist[order[0]],filelist[order[1]],filelist[order[2]])
 	validate_STEP_ID(filelist[order[2]],filelist[order[3]])
-
+	return(True, "Passed Validation!")
+	
 def perform_validate(args):
 	validate_files(args.file)
 	print("Passed Validation")
