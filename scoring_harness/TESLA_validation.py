@@ -123,7 +123,7 @@ def validate_1(submission_filepath):
 	checkType(submission, string_cols, str)
 	checkType(submission, float_cols, float)
 
-	return(True,"Passed Validation")
+	return(True,"Passed Validation!")
 
 
 def validate_2(submission_filepath):
@@ -146,7 +146,7 @@ def validate_2(submission_filepath):
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
 
-	return(True,"Passed Validation")
+	return(True,"Passed Validation!")
 
 
 def validate_3(submission_filepath):
@@ -166,7 +166,7 @@ def validate_3(submission_filepath):
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
 
-	return(True,"Passed Validation")
+	return(True,"Passed Validation!")
 
 #Validate workflow
 def validate_4(submission_filepath):
@@ -178,8 +178,25 @@ def validate_4(submission_filepath):
 	checkType(submission, ["STEP_ID","PREV_STEP_ID"], int)
 	checkType(submission, ["DESC"], str)
 
-	return(True,"Passed Validation")
+	return(True,"Passed Validation!")
 
+def validate_VAR_ID(submission1_filepath, submission2_filepath, submission3_filepath):
+	submission1 = pd.read_csv(submission1_filepath)
+	submission2 = pd.read_csv(submission2_filepath)
+	submission3 = pd.read_csv(submission3_filepath)
+
+	assert submission2['VAR_ID'].isin(submission1['VAR_ID']), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
+	assert submission3['VAR_ID'].isin(submission1['VAR_ID']), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
+
+	return(True, "Passed Validation!")
+
+def validate_STEP_ID(submission3_filepath, submission4_filepath):
+	submission3 = pd.read_csv(submission3_filepath)
+	submission4 = pd.read_csv(submission4_filepath)
+
+	assert submission3['STEP_ID'].isin(submission4['STEP_ID']), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_4.csv's STEP_IDs"
+
+	return(True, "Passed Validation!")
 
 validation_func = {"TESLA_OUT_1.csv":validate_1,
 				   "TESLA_OUT_2.csv":validate_2,
@@ -187,9 +204,14 @@ validation_func = {"TESLA_OUT_1.csv":validate_1,
 				   "TESLA_OUT_4.csv":validate_4}
 
 def validate_files(filelist):
-	for filepath in filelist:
-		assert os.path.basename(filepath) in ["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"], "Submission files must be named TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, or TESLA_OUT_4.csv"
+	requiredFiles = pd.Series(["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"])
+	basenames = [os.path.basename(name) for name in filelist]
+	assert all(requiredFiles.isin(basenames)), "All four submission file must be present and submission files must be named TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, or TESLA_OUT_4.csv"
+	for filepath in filelist: 
 		validation_func[os.path.basename(filepath)](filepath)
+	order = pd.np.argsort(basenames)
+	validate_VAR_ID(filelist[order[0]],filelist[order[1]],filelist[order[2]])
+	validate_STEP_ID(filelist[order[2]],filelist[order[3]])
 
 def perform_validate(args):
 	validate_files(args.file)
