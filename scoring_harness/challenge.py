@@ -177,6 +177,8 @@ def validate(evaluation, canCancel, dry_run=False):
     print "\n\nValidating", evaluation.id, evaluation.name
     print "-" * 60
     sys.stdout.flush()
+    team_mapping_table = syn.tableQuery('select * from syn8220615')
+    team_mapping = team_mapping_table.asDataFrame()
 
     for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
 
@@ -187,7 +189,7 @@ def validate(evaluation, canCancel, dry_run=False):
         print "validating", submission.id, submission.name
         addAnnots = {}
         try:
-            is_valid, validation_message, addAnnots = conf.validate_submission(syn, evaluation, submission)
+            is_valid, validation_message, addAnnots = conf.validate_submission(syn, evaluation, submission, team_mapping)
         except Exception as ex1:
             is_valid = False
             print "Exception during validation:", type(ex1), ex1, ex1.message

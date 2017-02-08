@@ -52,21 +52,19 @@ for q in evaluation_queues:
 leaderboard_tables = {}
 
 
-def validate_submission(syn, evaluation, submission):
+def validate_submission(syn, evaluation, submission, team_mapping):
     """
     Find the right validation function and validate the submission.
 
     :returns: (True, message) if validated, (False, message) if
               validation fails or throws exception
     """
-    if 'teamId' in submission:
-        team = syn.getTeam(submission.teamId)
-        if 'name' in team:
-            teamDict = {'team':team['name']}
-        else:
-            teamDict = {'team':submission.teamId}
-    else:
-        raise AssertionError("Must submit as part of a team and not as an individual")
+
+    assert 'teamId' in submission, "Must submit as part of a team and not as an individual"
+    team = syn.getTeam(submission.teamId)
+    teamIndex = team_mapping['realTeam'] == team['name']
+    assert sum(teamIndex) == 1, "Must submit as one of these teams: %s" % ", ".join(team_mapping['realTeam'])
+    teamDict = {'team':team_mapping['alias'][teamIndex]}
 
     #Unzip files here
     dirname = submission.entity.cacheDir
