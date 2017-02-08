@@ -80,7 +80,7 @@ def validateSymbol(gene, returnMapping=False):
 			if len(symbol) > 1:
 				print("%s can be mapped to different symbols: %s. Please correct." % (gene, ", ".join(symbol)))
 			else:
-				print("%s will be remapped to %s" % (gene, symbol[0]))
+				print("%s should be remapped to %s" % (gene, symbol[0]))
 				if returnMapping:
 					return({gene, symbol[0]})
 				else:
@@ -116,7 +116,7 @@ def validate_1(submission_filepath):
 	#CHECK: STRAND must be +/-
 	assert all(submission.STRAND.isin(['+','-'])), "STRAND values must be + or -.  You have: %s" %(", ".join(set(submission.STRAND[~submission.STRAND.isin(['+','-'])])))
 	#CHECK: gene validation
-	assert all(pool.map(validateSymbol, submission.GENE.drop_duplicates())), "All gene symbols in GENE column must be correct"
+	assert all(pool.map(validateSymbol, submission.GENE.drop_duplicates())), "All gene symbols in GENE column must be up to date (hgnc standards)"
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
