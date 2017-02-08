@@ -72,8 +72,12 @@ def validate_submission(syn, evaluation, submission):
         raise AssertionError("Must submit as part of a team and not as an individual")
 
     #Unzip files here
+
     dirname = submission.entity.cacheDir
-    zfile = zipfile.ZipFile(submission.filePath)
+    try:
+        zfile = zipfile.ZipFile(submission.filePath)
+    except zipfile.BadZipfile as e:
+        raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv")
 
     for name in zfile.namelist():
       zfile.extract(name, dirname)
