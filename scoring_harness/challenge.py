@@ -186,7 +186,7 @@ def validate(evaluation, canCancel, dry_run=False):
         ex1 = None #Must define ex1 in case there is no error
         print "validating", submission.id, submission.name
         try:
-            is_valid, validation_message = conf.validate_submission(syn, evaluation, submission)
+            is_valid, validation_message, addAnnots = conf.validate_submission(syn, evaluation, submission)
         except Exception as ex1:
             is_valid = False
             print "Exception during validation:", type(ex1), ex1, ex1.message
@@ -197,9 +197,9 @@ def validate(evaluation, canCancel, dry_run=False):
         if canCancel:
             status.canCancel = True
         if not is_valid:
-            failure_reason = {"FAILURE_REASON":validation_message}
-            add_annotations = synapseclient.annotations.to_submission_status_annotations(failure_reason,is_private=True)
-            status = update_single_submission_status(status, add_annotations)
+            addAnnots.update({"FAILURE_REASON":validation_message})
+        add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=True)
+        status = update_single_submission_status(status, add_annotations)
 
         if not dry_run:
             status = syn.store(status)

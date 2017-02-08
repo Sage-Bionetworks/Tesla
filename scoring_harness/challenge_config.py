@@ -1,9 +1,3 @@
-# Use rpy2 if you have R scoring functions
-# import rpy2.robjects as robjects
-# import os
-# filePath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'getROC.R')
-# robjects.r("source('%s')" % filePath)
-# AUC_pAUC = robjects.r('GetScores')
 ##-----------------------------------------------------------------------------
 ##
 ## challenge specific code and configuration
@@ -14,55 +8,21 @@ import TESLA_validation as TESLA_val
 
 ## A Synapse project will hold the assetts for your challenge. Put its
 ## synapse ID here, for example
-## CHALLENGE_SYN_ID = "syn1234567"
-CHALLENGE_SYN_ID = ""
+CHALLENGE_SYN_ID = "syn7362874"
 
 ## Name of your challenge, defaults to the name of the challenge's project
-CHALLENGE_NAME = ""
+CHALLENGE_NAME = "TESLA_consortium"
 
 ## Synapse user IDs of the challenge admins who will be notified by email
 ## about errors in the scoring script
-ADMIN_USER_IDS = []
+ADMIN_USER_IDS = [3324230]
 
-
-## Each question in your challenge should have an evaluation queue through
-## which participants can submit their predictions or models. The queues
-## should specify the challenge project as their content source. Queues
-## can be created like so:
-##   evaluation = syn.store(Evaluation(
-##     name="My Challenge Q1",
-##     description="Predict all the things!",
-##     contentSource="syn1234567"))
-## ...and found like this:
-##   evaluations = list(syn.getEvaluationByContentSource('syn3375314'))
-## Configuring them here as a list will save a round-trip to the server
-## every time the script starts and you can link the challenge queues to
-## the correct scoring/validation functions.  Predictions will be validated and 
-
-def validate_func(submission, goldstandard_path):
-    ##Read in submission (submission.filePath)
-    ##Validate submission
-    ## MUST USE ASSERTION ERRORS!!! 
-    ##eg.
-    ## assert os.path.basename(submission.filePath) == "prediction.tsv", "Submission file must be named prediction.tsv"
-    ## or raise AssertionError()...
-    ## Only assertion errors will be returned to participants, all other errors will be returned to the admin
-    return(True,"Passed Validation")
 
 
 evaluation_queues = [
     {
-        'id':1,
-        'scoring_func':score1
-        'validation_func':validate_func
+        'id':8116290,
         'goldstandard_path':'path/to/sc1gold.txt'
-    },
-    {
-        'id':2,
-        'scoring_func':score2
-        'validation_func':validate_func
-        'goldstandard_path':'path/to/sc2gold.txt'
-
     }
 ]
 evaluation_queue_by_id = {q['id']:q for q in evaluation_queues}
@@ -105,14 +65,28 @@ def validate_submission(syn, evaluation, submission):
     if 'teamId' in submission:
         team = syn.getTeam(submission.teamId)
         if 'name' in team:
-            score['team'] = team['name']
+            teamDict = {'team':team['name']}
         else:
-            score['team'] = submission.teamId
+            teamDict = {'team':submission.teamId}
     else:
         raise AssertionError("Must submit as part of a team and not as an individual")
-        #Unzip files here
+
+    #Unzip files here
+    dirname = submission.entity.cacheDir
+    zfile = zipfile.ZipFile(submission.filePath)
+
+    for name in zfile.namelist():
+      zfile.extract(name, dirname)
+
+    tesla_out_1 = os.path.join(dirname,'TESLA_OUT_1.csv')
+    tesla_out_2 = os.path.join(dirname,'TESLA_OUT_2.csv')
+    tesla_out_3 = os.path.join(dirname,'TESLA_OUT_3.csv')
+    tesla_out_4 = os.path.join(dirname,'TESLA_OUT_4.csv')
+
+    filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4]
+    assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv must all be in the zipped file"
     TESLA_val.validate_files(filelist)
-    return True, validation_message
+    return True, "Validation passed!", teamDict
 
 
 def score_submission(evaluation, submission):
