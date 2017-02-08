@@ -65,7 +65,7 @@ def validate_submission(syn, evaluation, submission, team_mapping):
     team = syn.getTeam(submission.teamId)
     teamIndex = team_mapping['realTeam'] == team['name']
     assert sum(teamIndex) == 1, "Must submit as one of these teams: %s" % ", ".join(team_mapping['realTeam'])
-    teamDict = {'team':team_mapping['alias'][teamIndex]}
+    teamDict = {'team':team_mapping['alias'][teamIndex].values[0]}
 
     #Unzip files here
     dirname = submission.entity.cacheDir
