@@ -17,7 +17,7 @@ dry_run = False
 ## Edit these URLs to point to your challenge and its support forum
 defaults = dict(
     challenge_instructions_url = "https://www.synapse.org/#!Synapse:syn7362874/wiki/407415",
-    support_forum_url = "https://www.synapse.org/#!Synapse:syn7362874/wiki/407415",
+    support_forum_url = "https://www.synapse.org/#!Synapse:syn7362874/discussion/default",
     scoring_script = "The TESLA consortium")
 
 ##---------------------------------------------------------
