@@ -136,12 +136,12 @@ def validate_2(submission_filepath):
 	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert required_cols.isin(submission.columns), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN']
 	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
 	#CHECK: RANK must be ordered from 1 to nrows
-	assert submission.RANK == range(1, len(submission)+1), "RANK column must be sequencial and must start from 1 to the length of the data"
+	assert all(submission.RANK == range(1, len(submission)+1)), "RANK column must be sequencial and must start from 1 to the length of the data"
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
@@ -158,7 +158,7 @@ def validate_3(submission_filepath):
 	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert required_cols.isin(submission.columns), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN','STEP_ID']
 	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
 
@@ -173,7 +173,7 @@ def validate_4(submission_filepath):
 	required_cols = pd.Series(["STEP_ID","PREV_STEP_ID","DESC"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert required_cols.isin(submission.columns), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	
 	checkType(submission, ["STEP_ID","PREV_STEP_ID"], int)
 	checkType(submission, ["DESC"], str)
@@ -185,8 +185,8 @@ def validate_VAR_ID(submission1_filepath, submission2_filepath, submission3_file
 	submission2 = pd.read_csv(submission2_filepath)
 	submission3 = pd.read_csv(submission3_filepath)
 
-	assert submission2['VAR_ID'].isin(submission1['VAR_ID']), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
-	assert submission3['VAR_ID'].isin(submission1['VAR_ID']), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
+	assert all(submission2['VAR_ID'].isin(submission1['VAR_ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
+	assert all(submission3['VAR_ID'].isin(submission1['VAR_ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
 
 	return(True, "Passed Validation!")
 
@@ -194,7 +194,7 @@ def validate_STEP_ID(submission3_filepath, submission4_filepath):
 	submission3 = pd.read_csv(submission3_filepath)
 	submission4 = pd.read_csv(submission4_filepath)
 
-	assert submission3['STEP_ID'].isin(submission4['STEP_ID']), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_4.csv's STEP_IDs"
+	assert all(submission3['STEP_ID'].isin(submission4['STEP_ID'])), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_4.csv's STEP_IDs"
 
 	return(True, "Passed Validation!")
 
@@ -213,7 +213,7 @@ def validate_files(filelist):
 	validate_VAR_ID(filelist[order[0]],filelist[order[1]],filelist[order[2]])
 	validate_STEP_ID(filelist[order[2]],filelist[order[3]])
 	return(True, "Passed Validation!")
-	
+
 def perform_validate(args):
 	validate_files(args.file)
 	print("Passed Validation")
