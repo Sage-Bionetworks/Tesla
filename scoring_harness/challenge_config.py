@@ -103,7 +103,7 @@ def validate_submission(syn, evaluation, submission):
     validated, validation_message = config['validation_func'](submission, config['goldstandard_path'])
 
     if 'teamId' in submission:
-        team = syn.restGET('/team/{id}'.format(id=submission.teamId))
+        team = syn.getTeam(submission.teamId)
         if 'name' in team:
             score['team'] = team['name']
         else:
