@@ -10,6 +10,7 @@
 ##
 ##-----------------------------------------------------------------------------
 
+import TESLA_validation as TESLA_val
 
 ## A Synapse project will hold the assetts for your challenge. Put its
 ## synapse ID here, for example
@@ -91,7 +92,7 @@ for q in evaluation_queues:
 leaderboard_tables = {}
 
 
-def validate_submission(evaluation, submission):
+def validate_submission(syn, evaluation, submission):
     """
     Find the right validation function and validate the submission.
 
@@ -101,6 +102,16 @@ def validate_submission(evaluation, submission):
     config = evaluation_queue_by_id[int(evaluation.id)]
     validated, validation_message = config['validation_func'](submission, config['goldstandard_path'])
 
+    if 'teamId' in submission:
+        team = syn.restGET('/team/{id}'.format(id=submission.teamId))
+        if 'name' in team:
+            score['team'] = team['name']
+        else:
+            score['team'] = submission.teamId
+    else:
+        raise AssertionError("Must submit as part of a team and not as an individual")
+        #Unzip files here
+    TESLA_val.validate_files(filelist)
     return True, validation_message
 
 
