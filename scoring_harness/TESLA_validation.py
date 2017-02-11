@@ -3,7 +3,7 @@ import re
 import json
 import argparse
 from multiprocessing.dummy import Pool as ThreadPool 
-
+from functools import partial
 try:
 	import httplib2 as http
 except ImportError:
@@ -52,7 +52,7 @@ def hgncRestCall(path):
 		return(False, [None])
 
 # Validation of gene names
-def validateSymbol(gene, returnMapping=False):
+def validateSymbol(gene, returnMapping=False, entrez=False):
 	"""
 	This function does validation of symbols
 
@@ -64,12 +64,19 @@ def validateSymbol(gene, returnMapping=False):
 	"""
 	path = '/fetch/symbol/%s' %  gene
 	verified, symbol = hgncRestCall(path)
-	if not verified:
+	if not verified and not entrez:
 		path = '/fetch/prev_symbol/%s' %  gene
 		verified, symbol = hgncRestCall(path)
-	if not verified:
+	if not verified and not entrez:
 		path = '/fetch/alias_symbol/%s' %  gene
 		verified, symbol = hgncRestCall(path)
+	if not verified and entrez:
+		path = '/fetch/ensembl_gene_id/%s' %  gene
+		verified, symbol = hgncRestCall(path)
+		if verified:
+			return(True)
+		else:
+			return(False)
 	if gene in symbol:
 		return(True)
 	else:
@@ -97,11 +104,11 @@ def validate_1(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_1.csv
 	"""
-	required_cols = pd.Series(["VAR_ID","GENE","CHROM","START","END","STRAND","CLASS","REFALLELE","MUTALLELE","REFCOUNT_T","MUTCOUNT_T",
-					 "REFCOUNT_N","MUTDEPTH_N","REF_FPKM_T","REF_HTSEQ_T","MUT_FPKM_T","MUT_HTSEQ_T","QUAL","VARID","INFO"])
-	integer_cols = ['VAR_ID','START','END','REFCOUNT_T','MUTCOUNT_T','REFCOUNT_N','MUTDEPTH_N','REF_HTSEQ_T','MUT_HTSEQ_T','QUAL']
-	string_cols = ['REFALLELE','MUTALLELE','VARID','INFO']
-	float_cols = ['MUT_FPKM_T','REF_FPKM_T']
+	required_cols = pd.Series(["VAR_ID","GENE","SYMBOL","CHROM","START","END","CLASS","REF","ALT","REFCOUNT_T","ALTCOUNT_T",
+					 "REFCOUNT_N","ALTDEPTH_N","REF_FPKM_T","REF_HTSEQ_T","ALT_FPKM_T","ALT_HTSEQ_T","QUAL","VARID","INFO"])
+	integer_cols = ['VAR_ID','START','END','REFCOUNT_T','ALTCOUNT_T','REFCOUNT_N','ALTDEPTH_N','REF_HTSEQ_T','ALT_HTSEQ_T','QUAL']
+	string_cols = ['REF','ALT','VARID','INFO']
+	float_cols = ['ALT_FPKM_T','REF_FPKM_T']
 	CLASS_categories = ['intron','missense','silent','splice_site','in_frame_deletion','in_frame_insertion',
 						'frame_shift_deletion','frame_shift_insertion',
 						'nonsense_mutation','structural_variant','splice_isoform','other']
@@ -114,9 +121,12 @@ def validate_1(submission_filepath):
 	#CHECK: CLASS must be in CLASS_categories
 	assert all(submission.CLASS.isin(CLASS_categories)), "CLASS values must be one these: %s.  You have: %s" % (", ".join(CLASS_categories),", ".join(set(submission.CLASS[~submission.CLASS.isin(CLASS_categories)])))
 	#CHECK: STRAND must be +/-
-	assert all(submission.STRAND.isin(['+','-'])), "STRAND values must be + or -.  You have: %s" %(", ".join(set(submission.STRAND[~submission.STRAND.isin(['+','-'])])))
-	#CHECK: gene validation
-	assert all(pool.map(validateSymbol, submission.GENE.drop_duplicates())), "All gene symbols in GENE column must be up to date (hgnc standards)"
+	#assert all(submission.STRAND.isin(['+','-'])), "STRAND values must be + or -.  You have: %s" %(", ".join(set(submission.STRAND[~submission.STRAND.isin(['+','-'])])))
+	#CHECK: HUGO SYMBOL validation
+	assert all(pool.map(validateSymbol, submission.SYMBOL.drop_duplicates())), "All gene symbols in GENE column must be up to date (hgnc standards)"
+	#CHECK: ENTREZ GENE ID VALIDATION
+	validateGene = partial(validateSymbol, entrez=True)
+	assert all(pool.map(validateGene, submission.GENE.drop_duplicates())), "All gene symbols in GENE column must be up to date (hgnc standards)"
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
@@ -133,13 +143,13 @@ def validate_2(submission_filepath):
 	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
 	"""
 	#VAR_ID have to check out with first file
-	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ"])
+	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","ALT_EPI_SEQ","WT_EPI_SEQ"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN']
-	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
+	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','WT_EPI_SEQ']
 	#CHECK: RANK must be ordered from 1 to nrows
 	assert all(submission.RANK == range(1, len(submission)+1)), "RANK column must be sequencial and must start from 1 to the length of the data"
 	#CHECK: integer, string and float columns are correct types
@@ -155,12 +165,12 @@ def validate_3(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
 	"""
-	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ","STEP_ID"])
+	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","ALT_EPI_SEQ","WT_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN','STEP_ID']
-	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
+	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','WT_EPI_SEQ']
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
