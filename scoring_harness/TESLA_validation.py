@@ -109,9 +109,17 @@ def validate_1(submission_filepath):
 	integer_cols = ['VAR_ID','START','END','REFCOUNT_T','ALTCOUNT_T','REFCOUNT_N','ALTDEPTH_N','REF_HTSEQ_T','ALT_HTSEQ_T','QUAL']
 	string_cols = ['REF','ALT','VARID','INFO']
 	float_cols = ['ALT_FPKM_T','REF_FPKM_T']
-	CLASS_categories = ['intron','missense','silent','splice_site','in_frame_deletion','in_frame_insertion',
-						'frame_shift_deletion','frame_shift_insertion',
-						'nonsense_mutation','structural_variant','splice_isoform','other']
+	#CLASS_categories = ['intron','missense','silent','splice_site','in_frame_deletion','in_frame_insertion',
+	#					'frame_shift_deletion','frame_shift_insertion',
+	#					'nonsense_mutation','structural_variant','splice_isoform','other']
+	CLASS_categories = ['transcript_ablation','splice_acceptor_variant','splice_donor_variant','stop_gained','frameshift_variant',
+						'stop_lost','start_lost','transcript_amplification','inframe_insertion','inframe_deletion','missense_variant',
+						'protein_altering_variant','splice_region_variant','incomplete_terminal_codon_variant','stop_retained_variant',
+						'synonymous_variant','coding_sequence_variant','mature_miRNA_variant','5_prime_UTR_variant','3_prime_UTR_variant',
+						'non_coding_transcript_exon_variant','intron_variant','NMD_transcript_variant','non_coding_transcript_variant',
+						'upstream_gene_variant','downstream_gene_variant','TFBS_ablation','TFBS_amplification','TF_binding_site_variant',
+						'regulatory_region_ablation','regulatory_region_amplification','feature_elongation','regulatory_region_variant',
+						'feature_truncation','intergenic_variant']
 	#NO duplicated VAR_ID
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
