@@ -77,7 +77,7 @@ def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
 
     assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
     if submissionName.endswith(".zip"):
-        assert submissionName == "%s.zip", "Zip file must be named <patientId>.zip"
+        assert submissionName == "%s.zip" % patientId, "Zip file must be named patientId.zip"
         #Unzip files here
         dirname = submission.entity.cacheDir
         try:
@@ -97,7 +97,7 @@ def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
         assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv must all be in the zipped file"
         TESLA_val.validate_files(filelist,patientId,validateBAM=False,validateVCF=False)
     elif submissionName.endswith(".vcf"):
-        assert submissionName == "%s_VCF.vcf", "VCF must be named <patientId>_VCF.vcf"
+        assert submissionName == "%s_VCF.vcf" % patientId, "VCF must be named patientId_VCF.vcf"
         TESLA_val.validateVCF(submission.filePath)
     teamDict['patientId'] = patientId
     return True, "Validation passed!", teamDict
