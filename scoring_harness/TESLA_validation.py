@@ -100,44 +100,44 @@ def validate_4(submission_filepath):
 
 ### VALIDATING VCF
 def contains_whitespace(x):
-    """
-    Helper function for validateVCF.  No whitespace is allowed in VCF files
+	"""
+	Helper function for validateVCF.  No whitespace is allowed in VCF files
 
-    :returns:     Sum of the the amount of whitespace in a string
-    """
-    return(sum([" " in i for i in x if isinstance(i, str)]))
+	:returns:     Sum of the the amount of whitespace in a string
+	"""
+	return(sum([" " in i for i in x if isinstance(i, str)]))
 
 # Resolve missing read counts
 def validateVCF(filePath):
-    """
-    This function validates the VCF file to make sure it adhere to the genomic SOP.
-    
-    :params filePath:     Path to VCF file
+	"""
+	This function validates the VCF file to make sure it adhere to the genomic SOP.
+	
+	:params filePath:     Path to VCF file
 
-    :returns:             Text with all the errors in the VCF file
-    """  
-    required_cols = pd.Series(["#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","TUMOR","NORMAL"])
-    #FORMAT is optional
-    with open(filePath,"r") as foo:
-        for i in foo:
-            if i.startswith("#CHROM"):
-                headers = i.replace("\n","").split("\t")
-    if headers is not None:
-        submission = pd.read_csv(filePath, sep="\t",comment="#",header=None,names=headers)
-    else:
-        raise ValueError("Your vcf must start with the header #CHROM")
+	:returns:             Text with all the errors in the VCF file
+	"""  
+	required_cols = pd.Series(["#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","TUMOR","NORMAL"])
+	#FORMAT is optional
+	with open(filePath,"r") as foo:
+		for i in foo:
+			if i.startswith("#CHROM"):
+				headers = i.replace("\n","").split("\t")
+	if headers is not None:
+		submission = pd.read_csv(filePath, sep="\t",comment="#",header=None,names=headers)
+	else:
+		raise ValueError("Your vcf must start with the header #CHROM")
 
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	
-    #Require that they report variants mapped to either GRCh37 or hg19 without 
-    #the chr-prefix. variants on chrM are not supported
+	#Require that they report variants mapped to either GRCh37 or hg19 without 
+	#the chr-prefix. variants on chrM are not supported
 	assert all(submission['#CHROM'].isin(range(1,23) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])])) 
-    #No white spaces
-    temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
-    assert sum(temp) == 0, "Your vcf file should not have any white spaces in any of the columns"
-    #I can also recommend a `bcftools query` command that will parse a VCF in a detailed way, 
-    #and output with warnings or errors if the format is not adhered too
+	#No white spaces
+	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
+	assert sum(temp) == 0, "Your vcf file should not have any white spaces in any of the columns"
+	#I can also recommend a `bcftools query` command that will parse a VCF in a detailed way, 
+	#and output with warnings or errors if the format is not adhered too
 	return(True,"Passed Validation!")
 
 def validate_VAR_ID(submission1_filepath, submission2_filepath, submission3_filepath):
@@ -162,22 +162,25 @@ validation_func = {"TESLA_OUT_1.csv":validate_1,
 				   "TESLA_OUT_2.csv":validate_2,
 				   "TESLA_OUT_3.csv":validate_3,
 				   "TESLA_OUT_4.csv":validate_4,
-				   "TESLA_VCF.vcf":validateVCF}
+				   "VCF":validateVCF}
 
 def validate_files(filelist, patientId, validatingBAM=True, validatingVCF=True):
 	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"]
 	if validatingBAM:
-		bams.extend(["%s_EXOME_N.bam" % patientId ,"%s_EXOME_T.bam"% patientId,"%s_RNA_T.bam"% patientId])
+		required.extend(["%s_EXOME_N.bam" % patientId ,"%s_EXOME_T.bam"% patientId,"%s_RNA_T.bam"% patientId])
 	if validatingVCF:
 		required.append("%s_VCF.vcf" % patientId)
 	requiredFiles = pd.Series(required)
 	basenames = [os.path.basename(name) for name in filelist]
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
 	for filepath in filelist: 
-		validation_func[os.path.basename(filepath)](filepath)
+		if os.path.basename(filepath).endswith(".vcf"):
+			validation_func["VCF"](filepath)
+		elif not os.path.basename(filepath).endswith(".bam"):
+			validation_func[os.path.basename(filepath)](filepath)
 	order = pd.np.argsort(basenames)
-	validate_VAR_ID(filelist[order[0]],filelist[order[1]],filelist[order[2]])
-	validate_STEP_ID(filelist[order[2]],filelist[order[3]])
+	validate_VAR_ID(filelist[order[4]],filelist[order[5]],filelist[order[6]])
+	validate_STEP_ID(filelist[order[6]],filelist[order[7]])
 	return(True, "Passed Validation!")
 
 def perform_validate(args):
@@ -189,7 +192,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Validate TESLA files per sample')
 	parser.add_argument("file", type=str, nargs="+",
 						help='path to TESLA files (8 files per sample to validate)')
-	parser.add_arguemnt("patientId",type=str,
+	parser.add_argument("--patientId",type=str,required=True,
 						help='Patient Id')
 	args = parser.parse_args()
 
