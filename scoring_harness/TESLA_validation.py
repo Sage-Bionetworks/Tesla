@@ -178,7 +178,7 @@ def validate_files(filelist, patientId, validatingBAM=True, validatingVCF=True):
 			validation_func["VCF"](filepath)
 		elif not os.path.basename(filepath).endswith(".bam"):
 			validation_func[os.path.basename(filepath)](filepath)
-	onlyTesla = [i for i in basenames if "TESLA" in i]
+	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i]
 	order = pd.np.argsort(onlyTesla)
 	validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[2]])
 	validate_STEP_ID(onlyTesla[order[2]],onlyTesla[order[3]])
