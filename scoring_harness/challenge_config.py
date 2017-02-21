@@ -54,13 +54,14 @@ for q in evaluation_queues:
 leaderboard_tables = {}
 
 
-def validate_submission(syn, evaluation, submission, team_mapping):
+def validate_submission(syn, evaluation, submission, team_mapping, metadataPath):
     """
     Find the right validation function and validate the submission.
 
     :returns: (True, message) if validated, (False, message) if
               validation fails or throws exception
     """
+    metadata = pd.read_excel(metadataPath)
     assert 'teamId' in submission, "Must submit as part of a team and not as an individual"
     team = syn.getTeam(submission.teamId)
     teamIndex = team_mapping['realTeam'] == team['name']
@@ -73,9 +74,11 @@ def validate_submission(syn, evaluation, submission, team_mapping):
     else:
         submissionName = submission.entity.name
         assert submissionName.endswith(("_EXOME_N.bam","_EXOME_T.bam","_RNA_T.bam")), "Bam files must end in _EXOME_N.bam, _EXOME_T.bam, or _RNA_T.bam"
-    patientId = re.sub("(\d+)_.+","\\1",submissionName)
-    assert int(patientId) in range(1,15), "Patient Id must be part of the Id list"
-    if submission.filePath.endswith(".zip"):
+    patientId = re.sub("(\d+).+","\\1",submissionName)
+
+    assert int(patientId) in set(metadata.patientId), "Patient Id must be part of the Id list"
+    if submissionName.endswith(".zip"):
+        assert submissionName == "%s.zip", "Zip file must be named <patientId>.zip"
         #Unzip files here
         dirname = submission.entity.cacheDir
         try:
@@ -94,7 +97,8 @@ def validate_submission(syn, evaluation, submission, team_mapping):
         filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4]
         assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv must all be in the zipped file"
         TESLA_val.validate_files(filelist,patientId,validateBAM=False,validateVCF=False)
-    elif submission.filePath.endswith(".vcf"):
+    elif submissionName.endswith(".vcf"):
+        assert submissionName == "%s_VCF.vcf", "VCF must be named <patientId>_VCF.vcf"
         TESLA_val.validateVCF(submission.filePath)
     teamDict['patientId'] = patientId
     return True, "Validation passed!", teamDict
