@@ -42,7 +42,6 @@ def validate_1(submission_filepath):
 
 	return(True,"Passed Validation!")
 
-
 def validate_2(submission_filepath):
 	"""
 	Validates second TESLA file
@@ -66,7 +65,6 @@ def validate_2(submission_filepath):
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float)
 
 	return(True,"Passed Validation!")
-
 
 def validate_3(submission_filepath):
 	"""
