@@ -31,7 +31,7 @@ validation_failed_template = """\
 
 <p>Sorry, but we were unable to validate your submission to the {queue_name}.</p>
 
-<p>Please refer to the challenge instructions which can be found at \
+<p>Please refer to the submission instructions which can be found at \
 {challenge_instructions_url} and to the error message below:</p>
 
 <p>submission name: <b>{submission_name}</b><br>
@@ -56,7 +56,7 @@ validation_passed_template = """\
 <p>submission name: <b>{submission_name}</b><br>
 submission ID: <b>{submission_id}</b></p>
 
-<p>If you have questions, please ask on the forums at {support_forum_url} or refer to the challenge \
+<p>If you have questions, please ask on the forums at {support_forum_url} or refer to the submission \
 instructions which can be found at {challenge_instructions_url}.</p>
 
 <p>Sincerely,<br>
@@ -85,7 +85,7 @@ scoring_error_template = """\
 
 <p>Sorry, but we were unable to process your submission to the {queue_name}.</p>
 
-<p>Please refer to the challenge instructions which can be found at \
+<p>Please refer to the submission instructions which can be found at \
 {challenge_instructions_url} and to the error message below:</p>
 
 <p>submission name: <b>{submission_name}</b><br>
