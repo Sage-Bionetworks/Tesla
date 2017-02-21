@@ -1,23 +1,10 @@
 import os
 import re
-import json
 import argparse
-from multiprocessing.dummy import Pool as ThreadPool 
-from functools import partial
-try:
-	import httplib2 as http
-except ImportError:
-	raise ImportError("Please make sure you have httplib2 installed: pip install httplib2")
 try:
 	import pandas as pd
 except ImportError:
 	raise ImportError("Please make sure you have pandas installed: pip install pandas")
-try:
-	from urlparse import urlparse
-except ImportError:
-	from urllib.parse import urlparse
-
-pool = ThreadPool(4)
 
 def checkType(submission, cols, colType):
 	for col in cols:
