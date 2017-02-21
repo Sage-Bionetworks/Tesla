@@ -95,7 +95,7 @@ def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
 
         filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4]
         assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv must all be in the zipped file"
-        TESLA_val.validate_files(filelist,patientId,validateBAM=False,validateVCF=False)
+        TESLA_val.validate_files(filelist,patientId,validatingBAM=False,validatingVCF=False)
     elif submissionName.endswith(".vcf"):
         assert submissionName == "%s_VCF.vcf" % patientId, "VCF must be named patientId_VCF.vcf"
         TESLA_val.validateVCF(submission.filePath)
