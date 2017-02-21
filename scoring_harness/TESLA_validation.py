@@ -19,81 +19,6 @@ except ImportError:
 
 pool = ThreadPool(4)
 
-#Validate genes
-def hgncRestCall(path):
-	"""
-	This function does the rest call to the genenames website
-
-	:params path:     The gene symbol url path to add to the base uri
-
-	:returns:         If the symbol exists, returns True and the corrected symbol, otherwise returns False and None.
-	"""
-	headers = {'Accept': 'application/json',}
-
-	uri = 'http://rest.genenames.org'
-
-	target = urlparse(uri+path)
-	method = 'GET'
-	body = ''
-	h = http.Http()
-	response, content = h.request(target.geturl(),
-								  method,
-								  body,
-								  headers)
-	if response['status'] == '200':
-		data = json.loads(content)
-		if len(data['response']['docs']) == 0:
-			return(False, [None])
-		else:
-			#print(len(data['response']['docs']))
-			mapped = [symbol['symbol'] for symbol in data['response']['docs']]
-			return(True, mapped)
-	else:
-		return(False, [None])
-
-# Validation of gene names
-def validateSymbol(gene, returnMapping=False, entrez=False):
-	"""
-	This function does validation of symbols
-
-	:params gene:               Gene symbol
-	:params returnMapping:      Return mapping of old gene to new gene
-
-	:returns:                   Check if the provided gene name is a correct symbol and print out genes 
-								that need to be remapped or can't be mapped to anything
-	"""
-	path = '/fetch/symbol/%s' %  gene
-	verified, symbol = hgncRestCall(path)
-	if not verified and not entrez:
-		path = '/fetch/prev_symbol/%s' %  gene
-		verified, symbol = hgncRestCall(path)
-	if not verified and not entrez:
-		path = '/fetch/alias_symbol/%s' %  gene
-		verified, symbol = hgncRestCall(path)
-	if not verified and entrez:
-		path = '/fetch/ensembl_gene_id/%s' %  gene
-		verified, symbol = hgncRestCall(path)
-		if verified:
-			return(True)
-		else:
-			return(False)
-	if gene in symbol:
-		return(True)
-	else:
-		if symbol[0] is None:
-			print("%s cannot be remapped. Please correct." % gene)
-		else:
-			#if "MLL4", then the HUGO symbol should be KMT2D and KMT2B
-			if len(symbol) > 1:
-				print("%s can be mapped to different symbols: %s. Please correct." % (gene, ", ".join(symbol)))
-			else:
-				print("%s should be remapped to %s" % (gene, symbol[0]))
-				if returnMapping:
-					return({gene, symbol[0]})
-				else:
-					return(True)
-		return(False)
-
 def checkType(submission, cols, colType):
 	for col in cols:
 		assert all(submission[col].apply(lambda x: isinstance(x, colType))), "All values in %s column must be type: %s" % (col, re.sub(".+['](.+)['].+","\\1",str(colType)))
@@ -104,42 +29,16 @@ def validate_1(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_1.csv
 	"""
-	required_cols = pd.Series(["VAR_ID","GENE","SYMBOL","CHROM","START","END","CLASS","REF","ALT","REFCOUNT_T","ALTCOUNT_T",
-					 "REFCOUNT_N","ALTDEPTH_N","REF_FPKM_T","REF_HTSEQ_T","ALT_FPKM_T","ALT_HTSEQ_T","QUAL","VARID","INFO"])
-	integer_cols = ['VAR_ID','START','END','REFCOUNT_T','ALTCOUNT_T','REFCOUNT_N','ALTDEPTH_N','REF_HTSEQ_T','ALT_HTSEQ_T','QUAL']
-	string_cols = ['REF','ALT','VARID','INFO']
-	float_cols = ['ALT_FPKM_T','REF_FPKM_T']
-	#CLASS_categories = ['intron','missense','silent','splice_site','in_frame_deletion','in_frame_insertion',
-	#					'frame_shift_deletion','frame_shift_insertion',
-	#					'nonsense_mutation','structural_variant','splice_isoform','other']
-	CLASS_categories = ['transcript_ablation','splice_acceptor_variant','splice_donor_variant','stop_gained','frameshift_variant',
-						'stop_lost','start_lost','transcript_amplification','inframe_insertion','inframe_deletion','missense_variant',
-						'protein_altering_variant','splice_region_variant','incomplete_terminal_codon_variant','stop_retained_variant',
-						'synonymous_variant','coding_sequence_variant','mature_miRNA_variant','5_prime_UTR_variant','3_prime_UTR_variant',
-						'non_coding_transcript_exon_variant','intron_variant','NMD_transcript_variant','non_coding_transcript_variant',
-						'upstream_gene_variant','downstream_gene_variant','TFBS_ablation','TFBS_amplification','TF_binding_site_variant',
-						'regulatory_region_ablation','regulatory_region_amplification','feature_elongation','regulatory_region_variant',
-						'feature_truncation','intergenic_variant']
+	required_cols = pd.Series(["VAR_ID","CHROM","POS","VARID"])
+	integer_cols = ['VAR_ID','POS']
 	#NO duplicated VAR_ID
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	#CHECK: CHROM must be 1-22 or X
 	assert all(submission.CHROM.isin(range(1,23) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])])) 
-	#CHECK: CLASS must be in CLASS_categories
-	assert all(submission.CLASS.isin(CLASS_categories)), "CLASS values must be one these: %s.  You have: %s" % (", ".join(CLASS_categories),", ".join(set(submission.CLASS[~submission.CLASS.isin(CLASS_categories)])))
-	#CHECK: STRAND must be +/-
-	#assert all(submission.STRAND.isin(['+','-'])), "STRAND values must be + or -.  You have: %s" %(", ".join(set(submission.STRAND[~submission.STRAND.isin(['+','-'])])))
-	#CHECK: HUGO SYMBOL validation
-	assert all(pool.map(validateSymbol, submission.SYMBOL.drop_duplicates())), "All gene symbols in GENE column must be up to date (hgnc standards)"
-	#CHECK: ENTREZ GENE ID VALIDATION
-	validateGene = partial(validateSymbol, entrez=True)
-	assert all(pool.map(validateGene, submission.GENE.drop_duplicates())), "All gene symbols in GENE column must be up to date (hgnc standards)"
-
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
-	checkType(submission, string_cols, str)
-	checkType(submission, float_cols, float)
 
 	return(True,"Passed Validation!")
 
@@ -151,18 +50,20 @@ def validate_2(submission_filepath):
 	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
 	"""
 	#VAR_ID have to check out with first file
-	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","ALT_EPI_SEQ","WT_EPI_SEQ"])
+	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ"])
+
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
-	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN']
-	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','WT_EPI_SEQ']
+	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"RANK"]
+	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ','HLA_ALLELE_MUT']
 	#CHECK: RANK must be ordered from 1 to nrows
 	assert all(submission.RANK == range(1, len(submission)+1)), "RANK column must be sequencial and must start from 1 to the length of the data"
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float)
 
 	return(True,"Passed Validation!")
 
@@ -171,18 +72,19 @@ def validate_3(submission_filepath):
 	"""
 	Validates second TESLA file
 
-	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
+	:param submission_filepath: Path of submission file TESLA_OUT_3.csv
 	"""
-	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","PEP_LEN","ALT_EPI_SEQ","WT_EPI_SEQ","STEP_ID"])
+	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN','STEP_ID']
-	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','WT_EPI_SEQ']
+	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"STEP_ID"]
+	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ','HLA_ALLELE_MUT']
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float)
 
 	return(True,"Passed Validation!")
 
@@ -196,6 +98,48 @@ def validate_4(submission_filepath):
 	checkType(submission, ["STEP_ID","PREV_STEP_ID"], int)
 	checkType(submission, ["DESC"], str)
 
+	return(True,"Passed Validation!")
+
+### VALIDATING VCF
+def contains_whitespace(x):
+    """
+    Helper function for validateVCF.  No whitespace is allowed in VCF files
+
+    :returns:     Sum of the the amount of whitespace in a string
+    """
+    return(sum([" " in i for i in x if isinstance(i, str)]))
+
+# Resolve missing read counts
+def validateVCF(filePath):
+    """
+    This function validates the VCF file to make sure it adhere to the genomic SOP.
+    
+    :params filePath:     Path to VCF file
+
+    :returns:             Text with all the errors in the VCF file
+    """  
+    required_cols = pd.Series(["#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","TUMOR","NORMAL"])
+    #FORMAT is optional
+    with open(filePath,"r") as foo:
+        for i in foo:
+            if i.startswith("#CHROM"):
+                headers = i.replace("\n","").split("\t")
+    if headers is not None:
+        submission = pd.read_csv(filePath, sep="\t",comment="#",header=None,names=headers)
+    else:
+        raise ValueError("Your vcf must start with the header #CHROM")
+
+	#CHECK: Required headers must exist in submission
+	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	
+    #Require that they report variants mapped to either GRCh37 or hg19 without 
+    #the chr-prefix. variants on chrM are not supported
+	assert all(submission['#CHROM'].isin(range(1,23) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])])) 
+    #No white spaces
+    temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
+    assert sum(temp) == 0, "Your vcf file should not have any white spaces in any of the columns"
+    #I can also recommend a `bcftools query` command that will parse a VCF in a detailed way, 
+    #and output with warnings or errors if the format is not adhered too
 	return(True,"Passed Validation!")
 
 def validate_VAR_ID(submission1_filepath, submission2_filepath, submission3_filepath):
@@ -219,12 +163,18 @@ def validate_STEP_ID(submission3_filepath, submission4_filepath):
 validation_func = {"TESLA_OUT_1.csv":validate_1,
 				   "TESLA_OUT_2.csv":validate_2,
 				   "TESLA_OUT_3.csv":validate_3,
-				   "TESLA_OUT_4.csv":validate_4}
+				   "TESLA_OUT_4.csv":validate_4,
+				   "TESLA_VCF.vcf":validateVCF}
 
-def validate_files(filelist):
-	requiredFiles = pd.Series(["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"])
+def validate_files(filelist, patientId, validatingBAM=True, validatingVCF=True):
+	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"]
+	if validatingBAM:
+		bams.extend(["%s_EXOME_N.bam" % patientId ,"%s_EXOME_T.bam"% patientId,"%s_RNA_T.bam"% patientId])
+	if validatingVCF:
+		required.append("%s_VCF.vcf" % patientId)
+	requiredFiles = pd.Series(required)
 	basenames = [os.path.basename(name) for name in filelist]
-	assert all(requiredFiles.isin(basenames)), "All four submission file must be present and submission files must be named TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, or TESLA_OUT_4.csv"
+	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
 	for filepath in filelist: 
 		validation_func[os.path.basename(filepath)](filepath)
 	order = pd.np.argsort(basenames)
@@ -233,14 +183,16 @@ def validate_files(filelist):
 	return(True, "Passed Validation!")
 
 def perform_validate(args):
-	validate_files(args.file)
+	validate_files(args.file, args.patientId)
 	print("Passed Validation")
 
 if __name__ == "__main__":
 
-	parser = argparse.ArgumentParser(description='Validate GENIE files')
+	parser = argparse.ArgumentParser(description='Validate TESLA files per sample')
 	parser.add_argument("file", type=str, nargs="+",
-						help='path to TESLA files')
+						help='path to TESLA files (8 files per sample to validate)')
+	parser.add_arguemnt("patientId",type=str,
+						help='Patient Id')
 	args = parser.parse_args()
 
 	perform_validate(args)

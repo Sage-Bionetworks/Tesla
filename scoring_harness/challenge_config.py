@@ -7,6 +7,7 @@
 import TESLA_validation as TESLA_val
 import zipfile
 import os
+import re
 ## A Synapse project will hold the assetts for your challenge. Put its
 ## synapse ID here, for example
 CHALLENGE_SYN_ID = "syn7362874"
@@ -60,31 +61,42 @@ def validate_submission(syn, evaluation, submission, team_mapping):
     :returns: (True, message) if validated, (False, message) if
               validation fails or throws exception
     """
-
     assert 'teamId' in submission, "Must submit as part of a team and not as an individual"
     team = syn.getTeam(submission.teamId)
     teamIndex = team_mapping['realTeam'] == team['name']
     assert sum(teamIndex) == 1, "Must submit as one of these teams: %s" % ", ".join(team_mapping['realTeam'])
     teamDict = {'team':team_mapping['alias'][teamIndex].values[0]}
 
-    #Unzip files here
-    dirname = submission.entity.cacheDir
-    try:
-        zfile = zipfile.ZipFile(submission.filePath)
-    except zipfile.BadZipfile as e:
-        raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv")
+    if not submission.entity.name.endswith("bam"):
+        submission = syn.getSubmission(submission.id)
+        submissionName = os.path.basename(submission.filePath)
+    else:
+        submissionName = submission.entity.name
+        assert submissionName.endswith(("_EXOME_N.bam","_EXOME_T.bam","_RNA_T.bam")), "Bam files must end in _EXOME_N.bam, _EXOME_T.bam, or _RNA_T.bam"
+    patientId = re.sub("(\d+)_.+","\\1",submissionName)
+    assert int(patientId) in range(1,15), "Patient Id must be part of the Id list"
+    if submission.filePath.endswith(".zip"):
+        #Unzip files here
+        dirname = submission.entity.cacheDir
+        try:
+            zfile = zipfile.ZipFile(submission.filePath)
+        except zipfile.BadZipfile as e:
+            raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv")
 
-    for name in zfile.namelist():
-      zfile.extract(name, dirname)
+        for name in zfile.namelist():
+          zfile.extract(name, dirname)
 
-    tesla_out_1 = os.path.join(dirname,'TESLA_OUT_1.csv')
-    tesla_out_2 = os.path.join(dirname,'TESLA_OUT_2.csv')
-    tesla_out_3 = os.path.join(dirname,'TESLA_OUT_3.csv')
-    tesla_out_4 = os.path.join(dirname,'TESLA_OUT_4.csv')
+        tesla_out_1 = os.path.join(dirname,'TESLA_OUT_1.csv')
+        tesla_out_2 = os.path.join(dirname,'TESLA_OUT_2.csv')
+        tesla_out_3 = os.path.join(dirname,'TESLA_OUT_3.csv')
+        tesla_out_4 = os.path.join(dirname,'TESLA_OUT_4.csv')
 
-    filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4]
-    assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv must all be in the zipped file"
-    TESLA_val.validate_files(filelist)
+        filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4]
+        assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv must all be in the zipped file"
+        TESLA_val.validate_files(filelist,patientId,validateBAM=False,validateVCF=False)
+    elif submission.filePath.endswith(".vcf"):
+        TESLA_val.validateVCF(submission.filePath)
+    teamDict['patientId'] = patientId
     return True, "Validation passed!", teamDict
 
 

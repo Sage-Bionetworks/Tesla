@@ -184,7 +184,7 @@ def validate(evaluation, canCancel, dry_run=False):
 
         ## refetch the submission so that we get the file path
         ## to be later replaced by a "downloadFiles" flag on getSubmissionBundles
-        submission = syn.getSubmission(submission)
+        submission = syn.getSubmission(submission,downloadFile=False)
         ex1 = None #Must define ex1 in case there is no error
         print "validating", submission.id, submission.name
         addAnnots = {}
