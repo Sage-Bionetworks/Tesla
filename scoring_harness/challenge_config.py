@@ -54,14 +54,13 @@ for q in evaluation_queues:
 leaderboard_tables = {}
 
 
-def validate_submission(syn, evaluation, submission, team_mapping, metadataPath):
+def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
     """
     Find the right validation function and validate the submission.
 
     :returns: (True, message) if validated, (False, message) if
               validation fails or throws exception
     """
-    metadata = pd.read_excel(metadataPath)
     assert 'teamId' in submission, "Must submit as part of a team and not as an individual"
     team = syn.getTeam(submission.teamId)
     teamIndex = team_mapping['realTeam'] == team['name']
@@ -76,7 +75,7 @@ def validate_submission(syn, evaluation, submission, team_mapping, metadataPath)
         assert submissionName.endswith(("_EXOME_N.bam","_EXOME_T.bam","_RNA_T.bam")), "Bam files must end in _EXOME_N.bam, _EXOME_T.bam, or _RNA_T.bam"
     patientId = re.sub("(\d+).+","\\1",submissionName)
 
-    assert int(patientId) in set(metadata.patientId), "Patient Id must be part of the Id list"
+    assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
     if submissionName.endswith(".zip"):
         assert submissionName == "%s.zip", "Zip file must be named <patientId>.zip"
         #Unzip files here

@@ -48,7 +48,7 @@ import traceback
 import urllib
 import uuid
 import warnings
-
+import pandas as pd
 try:
     import challenge_config as conf
 except Exception as ex1:
@@ -180,7 +180,9 @@ def validate(evaluation, canCancel, dry_run=False):
     team_mapping_table = syn.tableQuery('select * from syn8220615')
     team_mapping = team_mapping_table.asDataFrame()
     metadataPath = syn.get("syn8290709").path
-
+    metadata = pd.read_excel(metadataPath)
+    patientIds = set(metadata.patientId)
+    
     for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
 
         ## refetch the submission so that we get the file path
@@ -190,7 +192,7 @@ def validate(evaluation, canCancel, dry_run=False):
         print "validating", submission.id, submission.name
         addAnnots = {}
         try:
-            is_valid, validation_message, addAnnots = conf.validate_submission(syn, evaluation, submission, team_mapping, metadataPath)
+            is_valid, validation_message, addAnnots = conf.validate_submission(syn, evaluation, submission, team_mapping, patientIds)
         except Exception as ex1:
             is_valid = False
             print "Exception during validation:", type(ex1), ex1, ex1.message
