@@ -72,9 +72,7 @@ def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
         submissionName = os.path.basename(submission.filePath)
     else:
         submissionName = submission.entity.name
-        assert submissionName.endswith(("_EXOME_N.bam","_EXOME_T.bam","_RNA_T.bam")), "Bam files must end in _EXOME_N.bam, _EXOME_T.bam, or _RNA_T.bam"
     patientId = re.sub("(\d+).+","\\1",submissionName)
-
     assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
     if submissionName.endswith(".zip"):
         assert submissionName == "%s.zip" % patientId, "Zip file must be named patientId.zip"
@@ -92,13 +90,13 @@ def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
         tesla_out_2 = os.path.join(dirname,'TESLA_OUT_2.csv')
         tesla_out_3 = os.path.join(dirname,'TESLA_OUT_3.csv')
         tesla_out_4 = os.path.join(dirname,'TESLA_OUT_4.csv')
+        tesla_vcf = os.path.join(dirname,'TESLA_VCF.vcf')
 
-        filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4]
-        assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv must all be in the zipped file"
-        TESLA_val.validate_files(filelist,patientId,validatingBAM=False,validatingVCF=False)
-    elif submissionName.endswith(".vcf"):
-        assert submissionName == "%s_VCF.vcf" % patientId, "VCF must be named patientId_VCF.vcf"
-        TESLA_val.validateVCF(submission.filePath)
+        filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4,tesla_vcf]
+        assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv, and TESLA_VCF.vcf must all be in the zipped file"
+        TESLA_val.validate_files(filelist,patientId,validatingBAM=False)
+    else:
+        assert submissionName in ["%s_EXOME_N.bam" % patientId,"%s_EXOME_T.bam" % patientId,"%s_RNA_T.bam" % patientId], "Bam files must be named patientId_EXOME_N.bam, patientId_EXOME_T.bam or patientId_RNA_T.bam"
     teamDict['patientId'] = patientId
     return True, "Validation passed!", teamDict
 

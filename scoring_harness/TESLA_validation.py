@@ -1,6 +1,7 @@
 import os
 import re
 import argparse
+import sys
 try:
 	import pandas as pd
 except ImportError:
@@ -149,21 +150,17 @@ validation_func = {"TESLA_OUT_1.csv":validate_1,
 				   "TESLA_OUT_2.csv":validate_2,
 				   "TESLA_OUT_3.csv":validate_3,
 				   "TESLA_OUT_4.csv":validate_4,
-				   "VCF":validateVCF}
+				   "TESLA_VCF.vcf":validateVCF}
 
-def validate_files(filelist, patientId, validatingBAM=True, validatingVCF=True):
-	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"]
+def validate_files(filelist, patientId, validatingBAM=False):
+	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv","TESLA_VCF.vcf"]
 	if validatingBAM:
 		required.extend(["%s_EXOME_N.bam" % patientId ,"%s_EXOME_T.bam"% patientId,"%s_RNA_T.bam"% patientId])
-	if validatingVCF:
-		required.append("%s_VCF.vcf" % patientId)
 	requiredFiles = pd.Series(required)
 	basenames = [os.path.basename(name) for name in filelist]
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
 	for filepath in filelist: 
-		if os.path.basename(filepath).endswith(".vcf"):
-			validation_func["VCF"](filepath)
-		elif not os.path.basename(filepath).endswith(".bam"):
+		if not os.path.basename(filepath).endswith(".bam"):
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i]
 	order = pd.np.argsort(onlyTesla)
@@ -179,9 +176,11 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Validate TESLA files per sample')
 	parser.add_argument("file", type=str, nargs="+",
-						help='path to TESLA files (8 files per sample to validate)')
-	parser.add_argument("--patientId",type=str,required=True,
+						help='path to TESLA files (Must have TESLA_OUT_{1..4}.csv and TESLA_VCF.vcf), bam files are optional')
+	parser.add_argument("--validatingBAM",action="store_true")
+	parser.add_argument("--patientId",type=str,default=None,
 						help='Patient Id')
+	if ("--validatingBAM" in sys.argv) and ("--patientId" not in sys.argv):
+	    parser.error("--patientId must be given if --validatingBAM is used")
 	args = parser.parse_args()
-
 	perform_validate(args)
