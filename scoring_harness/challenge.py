@@ -183,14 +183,14 @@ def validate(evaluation, canCancel, dry_run=False):
     metadata = pd.read_excel(metadataPath)
     patientIds = set(metadata.patientId)
     
-    for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
+    for submissionbund, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
 
         ## refetch the submission so that we get the file path
         ## to be later replaced by a "downloadFiles" flag on getSubmissionBundles
-        submission = syn.getSubmission(submission,downloadFile=False)
+        submission = syn.getSubmission(submissionbund,downloadFile=False)
         ex1 = None #Must define ex1 in case there is no error
         print "validating", submission.id, submission.name
-        addAnnots = {}
+        addAnnots = {"submissionName":submissionbund.entity.name}
         try:
             is_valid, validation_message, addAnnots = conf.validate_submission(syn, evaluation, submission, team_mapping, patientIds)
         except Exception as ex1:
