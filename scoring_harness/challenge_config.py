@@ -98,6 +98,7 @@ def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
     else:
         assert submissionName in ["%s_EXOME_N.bam" % patientId,"%s_EXOME_T.bam" % patientId,"%s_RNA_T.bam" % patientId], "Bam files must be named patientId_EXOME_N.bam, patientId_EXOME_T.bam or patientId_RNA_T.bam"
     teamDict['patientId'] = patientId
+    teamDict['submissionName'] = submissionName
     return True, "Validation passed!", teamDict
 
 

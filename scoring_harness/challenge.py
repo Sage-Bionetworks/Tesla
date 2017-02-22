@@ -204,7 +204,7 @@ def validate(evaluation, canCancel, dry_run=False):
             status.canCancel = True
         if not is_valid:
             addAnnots.update({"FAILURE_REASON":validation_message})
-        add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=True)
+        add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=False)
         status = update_single_submission_status(status, add_annotations)
 
         if not dry_run:
