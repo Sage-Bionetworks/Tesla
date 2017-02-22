@@ -12,17 +12,21 @@ def addAnnotations(x, data_round):
 	annotations.pop('uploadAccount')
 	annotations.pop('rawName')
 	annotations['tumorPurityPercent'] = str(annotations.pop('tumorPurity(percent) '))
-	#annotations['pairedEndId'] = str(annotations['pairedEndId'])
 	ent.annotations = annotations
 	ent.round = data_round
 	syn.store(ent)
 	return(ent.id)
 
-metadataPath = syn.get("syn8290709").path
+metadataPath = syn.get("syn8294128").path
 metadata = pd.read_excel(metadataPath)
 metadata['qcFileName'] = metadata['qcFileName'].fillna('')
 metadata['checkpointInhibitor'] = metadata['checkpointInhibitor'].fillna('')
-
+metadata['classIHLAalleles'] = metadata['classIHLAalleles'].fillna('')
+metadata['collectionDate'] = metadata['collectionDate'].fillna('')
+metadata['isTreated'] = metadata['isTreated'].fillna('')
+metadata['organ'] = metadata['organ'].fillna('')
+metadata['sex'] = metadata['sex'].fillna('')
+metadata['tumorPurity(percent) '] = metadata['tumorPurity(percent) '].fillna('')
 data_round = 1
 
 metadata.apply(lambda x: addAnnotations(x, data_round), axis=1)
