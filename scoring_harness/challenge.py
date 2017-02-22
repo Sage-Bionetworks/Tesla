@@ -180,7 +180,7 @@ def validate(evaluation, canCancel, dry_run=False):
     team_mapping_table = syn.tableQuery('select * from syn8220615')
     team_mapping = team_mapping_table.asDataFrame()
     metadataPath = syn.get("syn8303410").path
-    metadata = pd.read_excel(metadataPath)
+    metadata = pd.read_csv(metadataPath)
     patientIds = set(metadata.patientId)
     
     for submissionbund, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
