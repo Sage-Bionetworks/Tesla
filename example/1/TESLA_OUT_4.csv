@@ -1,0 +1,3 @@
+STEP_ID,PREV_STEP_ID,DESC
+1,-1,Identify candidate epitopes
+2,1,Filter epitopes

@@ -2,14 +2,18 @@ import os
 import re
 import argparse
 import sys
+import math
 try:
 	import pandas as pd
 except ImportError:
 	raise ImportError("Please make sure you have pandas installed: pip install pandas")
 
-def checkType(submission, cols, colType):
+def checkType(submission, cols, colType, optional=False):
 	for col in cols:
-		assert all(submission[col].apply(lambda x: isinstance(x, colType))), "All values in %s column must be type: %s" % (col, re.sub(".+['](.+)['].+","\\1",str(colType)))
+		if optional:
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "All values in %s column must be type: %s [%s]" % (col, re.sub(".+['](.+)['].+","\\1",str(colType)), submission[col])
+		else:
+			assert all(submission[col].apply(lambda x: isinstance(x, colType))), "All values in %s column must be type: %s [%s]" % (col, re.sub(".+['](.+)['].+","\\1",str(colType)), submission[col])
 
 def validate_1(submission_filepath):
 	"""
@@ -24,7 +28,7 @@ def validate_1(submission_filepath):
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	#CHECK: CHROM must be 1-22 or X
-	assert all(submission.CHROM.isin(range(1,23) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])])) 
+	assert all(submission.CHROM.isin(list(range(1,23)) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])]))
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 
@@ -44,13 +48,14 @@ def validate_2(submission_filepath):
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"RANK"]
-	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ','HLA_ALLELE_MUT']
+	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
 	#CHECK: RANK must be ordered from 1 to nrows
 	assert all(submission.RANK == range(1, len(submission)+1)), "RANK column must be sequencial and must start from 1 to the length of the data"
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
-	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float)
+	checkType(submission, ['HLA_ALLELE_MUT'], str, optional=True)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, optional=True)
 
 	return(True,"Passed Validation!")
 
@@ -65,12 +70,13 @@ def validate_3(submission_filepath):
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"STEP_ID"]
-	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ','HLA_ALLELE_MUT']
+	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
-	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float)
+	checkType(submission, ['HLA_ALLELE_MUT'], str, optional=True)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, optional=True)
 
 	return(True,"Passed Validation!")
 
@@ -80,7 +86,7 @@ def validate_4(submission_filepath):
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-	
+
 	checkType(submission, ["STEP_ID","PREV_STEP_ID"], int)
 	checkType(submission, ["DESC"], str)
 
@@ -99,11 +105,11 @@ def contains_whitespace(x):
 def validateVCF(filePath):
 	"""
 	This function validates the VCF file to make sure it adhere to the genomic SOP.
-	
+
 	:params filePath:     Path to VCF file
 
 	:returns:             Text with all the errors in the VCF file
-	"""  
+	"""
 	required_cols = pd.Series(["#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","TUMOR","NORMAL"])
 	#FORMAT is optional
 	with open(filePath,"r") as foo:
@@ -117,14 +123,14 @@ def validateVCF(filePath):
 
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-	
-	#Require that they report variants mapped to either GRCh37 or hg19 without 
+
+	#Require that they report variants mapped to either GRCh37 or hg19 without
 	#the chr-prefix. variants on chrM are not supported
-	assert all(submission['#CHROM'].isin(range(1,23) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])])) 
+	assert all(submission['#CHROM'].isin(list(range(1,23)) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])]))
 	#No white spaces
 	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
 	assert sum(temp) == 0, "Your vcf file should not have any white spaces in any of the columns"
-	#I can also recommend a `bcftools query` command that will parse a VCF in a detailed way, 
+	#I can also recommend a `bcftools query` command that will parse a VCF in a detailed way,
 	#and output with warnings or errors if the format is not adhered too
 	return(True,"Passed Validation!")
 
@@ -142,7 +148,7 @@ def validate_STEP_ID(submission3_filepath, submission4_filepath):
 	submission3 = pd.read_csv(submission3_filepath)
 	submission4 = pd.read_csv(submission4_filepath)
 
-	assert all(submission3['STEP_ID'].isin(submission4['STEP_ID'])), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_4.csv's STEP_IDs"
+	assert all(submission3['STEP_ID'].isin(submission4['STEP_ID'].append(pd.Series([-1])))), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_4.csv's STEP_IDs"
 
 	return(True, "Passed Validation!")
 
@@ -159,7 +165,7 @@ def validate_files(filelist, patientId, validatingBAM=False):
 	requiredFiles = pd.Series(required)
 	basenames = [os.path.basename(name) for name in filelist]
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
-	for filepath in filelist: 
+	for filepath in filelist:
 		if not os.path.basename(filepath).endswith(".bam"):
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i]

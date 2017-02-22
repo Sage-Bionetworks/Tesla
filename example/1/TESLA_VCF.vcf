@@ -1,0 +1,11 @@
+##fileformat=VCFv4.2
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=G,Type=Integer,Description="Allelic Depths of REF and ALT(s) in the order listed">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TUMOR	NORMAL
+2	217498305	.	T	TGCTGCC	.	.	.	GT:AD:DP	0/1:10,10:20	0/0:30,5:35
+4	40434704	.	AGCGGCTGCGGCGGCTGCGGCC	A	.	.	.	GT:AD:DP	0/1:11,5:16	0/0:21,1:22
+6	41754573	.	C	CCTT	.	.	.	GT:AD:DP	0/1:9,17:26	0/0:43,0:43
+6	43250725	.	GGAA	G	.	.	.	GT:AD:DP	0/1:22,14:36	0/0:41,0:41
+22	16202096	.	C	A	.	.	.	GT:AD:DP	0/1:52,9:61	0/0:68,0:68
+22	16228619	.	T	C	.	.	.	GT:AD:DP	0/1:37,22:59	0/0:93,0:93
