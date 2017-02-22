@@ -126,7 +126,7 @@ def validateVCF(filePath):
 
 	#Require that they report variants mapped to either GRCh37 or hg19 without
 	#the chr-prefix. variants on chrM are not supported
-	assert all(submission['#CHROM'].isin(range(1,23) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])]))
+	assert all(submission['#CHROM'].isin(list(range(1,23)) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])]))
 	#No white spaces
 	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
 	assert sum(temp) == 0, "Your vcf file should not have any white spaces in any of the columns"
