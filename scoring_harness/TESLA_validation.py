@@ -21,7 +21,7 @@ def validate_1(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_1.csv
 	"""
-	required_cols = pd.Series(["VAR_ID","CHROM","POS","VARID"])
+	required_cols = pd.Series(["VAR_ID","CHROM","POS","OA_CALLER"])
 	integer_cols = ['VAR_ID','POS']
 	#NO duplicated VAR_ID
 	submission = pd.read_csv(submission_filepath)
