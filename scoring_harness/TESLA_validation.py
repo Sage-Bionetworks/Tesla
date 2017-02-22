@@ -2,14 +2,18 @@ import os
 import re
 import argparse
 import sys
+import math
 try:
 	import pandas as pd
 except ImportError:
 	raise ImportError("Please make sure you have pandas installed: pip install pandas")
 
-def checkType(submission, cols, colType):
+def checkType(submission, cols, colType, optional=False):
 	for col in cols:
-		assert all(submission[col].apply(lambda x: isinstance(x, colType))), "All values in %s column must be type: %s" % (col, re.sub(".+['](.+)['].+","\\1",str(colType)))
+		if optional:
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "All values in %s column must be type: %s [%s]" % (col, re.sub(".+['](.+)['].+","\\1",str(colType)), submission[col])
+		else:
+			assert all(submission[col].apply(lambda x: isinstance(x, colType))), "All values in %s column must be type: %s [%s]" % (col, re.sub(".+['](.+)['].+","\\1",str(colType)), submission[col])
 
 def validate_1(submission_filepath):
 	"""
@@ -24,7 +28,7 @@ def validate_1(submission_filepath):
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	#CHECK: CHROM must be 1-22 or X
-	assert all(submission.CHROM.isin(list(range(1,23)) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])])) 
+	assert all(submission.CHROM.isin(list(range(1,23)) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])]))
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 
@@ -44,13 +48,14 @@ def validate_2(submission_filepath):
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"RANK"]
-	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ','HLA_ALLELE_MUT']
+	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
 	#CHECK: RANK must be ordered from 1 to nrows
 	assert all(submission.RANK == range(1, len(submission)+1)), "RANK column must be sequencial and must start from 1 to the length of the data"
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
-	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float)
+	checkType(submission, ['HLA_ALLELE_MUT'], str, optional=True)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, optional=True)
 
 	return(True,"Passed Validation!")
 
@@ -65,12 +70,13 @@ def validate_3(submission_filepath):
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"STEP_ID"]
-	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ','HLA_ALLELE_MUT']
+	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
-	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float)
+	checkType(submission, ['HLA_ALLELE_MUT'], str, optional=True)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, optional=True)
 
 	return(True,"Passed Validation!")
 
