@@ -179,7 +179,7 @@ def validate(evaluation, canCancel, dry_run=False):
     sys.stdout.flush()
     team_mapping_table = syn.tableQuery('select * from syn8220615')
     team_mapping = team_mapping_table.asDataFrame()
-    metadataPath = syn.get("syn8290709").path
+    metadataPath = syn.get("syn8303410").path
     metadata = pd.read_excel(metadataPath)
     patientIds = set(metadata.patientId)
     
