@@ -148,7 +148,7 @@ def validate_STEP_ID(submission3_filepath, submission4_filepath):
 	submission3 = pd.read_csv(submission3_filepath)
 	submission4 = pd.read_csv(submission4_filepath)
 
-	assert all(submission3['STEP_ID'].isin(submission4['STEP_ID'])), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_4.csv's STEP_IDs"
+	assert all(submission3['STEP_ID'].isin(submission4['STEP_ID'].append(pd.Series([-1])))), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_4.csv's STEP_IDs"
 
 	return(True, "Passed Validation!")
 
