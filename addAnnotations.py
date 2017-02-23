@@ -17,12 +17,11 @@ def addAnnotations(x, data_round):
 	syn.store(ent)
 	return(ent.id)
 
-metadataPath = syn.get("syn8294128").path
-metadata = pd.read_excel(metadataPath)
+metadataPath = syn.get("syn8303410").path
+metadata = pd.read_csv(metadataPath)
 metadata['qcFileName'] = metadata['qcFileName'].fillna('')
 metadata['checkpointInhibitor'] = metadata['checkpointInhibitor'].fillna('')
 metadata['classIHLAalleles'] = metadata['classIHLAalleles'].fillna('')
-metadata['collectionDate'] = metadata['collectionDate'].fillna('')
 metadata['isTreated'] = metadata['isTreated'].fillna('')
 metadata['organ'] = metadata['organ'].fillna('')
 metadata['sex'] = metadata['sex'].fillna('')

@@ -179,8 +179,8 @@ def validate(evaluation, canCancel, dry_run=False):
     sys.stdout.flush()
     team_mapping_table = syn.tableQuery('select * from syn8220615')
     team_mapping = team_mapping_table.asDataFrame()
-    metadataPath = syn.get("syn8290709").path
-    metadata = pd.read_excel(metadataPath)
+    metadataPath = syn.get("syn8303410").path
+    metadata = pd.read_csv(metadataPath)
     patientIds = set(metadata.patientId)
     
     for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
@@ -204,7 +204,9 @@ def validate(evaluation, canCancel, dry_run=False):
             status.canCancel = True
         if not is_valid:
             addAnnots.update({"FAILURE_REASON":validation_message})
-        add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=True)
+        else:
+            addAnnots.update({"FAILURE_REASON":''})
+        add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=False)
         status = update_single_submission_status(status, add_annotations)
 
         if not dry_run:
