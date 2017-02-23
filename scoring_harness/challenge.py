@@ -190,7 +190,7 @@ def validate(evaluation, canCancel, dry_run=False):
         submission = syn.getSubmission(submission,downloadFile=False)
         ex1 = None #Must define ex1 in case there is no error
         print "validating", submission.id, submission.name
-        addAnnots = {"submissionName":submission.entity.name}
+        addAnnots = {}
         try:
             is_valid, validation_message, addAnnots = conf.validate_submission(syn, evaluation, submission, team_mapping, patientIds)
         except Exception as ex1:
