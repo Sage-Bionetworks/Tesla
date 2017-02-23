@@ -73,6 +73,7 @@ def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
     else:
         submissionName = submission.entity.name
     patientId = re.sub("(\d+).+","\\1",submissionName)
+    assert patientId.isdigit(), "Wrong filenaming convention"
     assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
     if submissionName.endswith(".zip"):
         assert submissionName == "%s.zip" % patientId, "Zip file must be named patientId.zip"
