@@ -66,12 +66,10 @@ def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
     teamIndex = team_mapping['realTeam'] == team['name']
     assert sum(teamIndex) == 1, "Must submit as one of these teams: %s" % ", ".join(team_mapping['realTeam'])
     teamDict = {'team':team_mapping['alias'][teamIndex].values[0]}
-
+    submissionName = submission.entity.name
     if not submission.entity.name.endswith("bam"):
         submission = syn.getSubmission(submission.id)
-        submissionName = os.path.basename(submission.filePath)
-    else:
-        submissionName = submission.entity.name
+
     patientId = re.sub("(\d+).+","\\1",submissionName)
     assert patientId.isdigit(), "Wrong filenaming convention"
     assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
