@@ -2,8 +2,6 @@ import synapseclient
 import pandas as pd
 import argparse
 
-
-
 def addAnnotationHelper(x, data_round):
 	result = syn.query('select id from file where parentId =="%s" and name == "%s"' %(x['uploadAccount'],x['teslaName']))
 	entityId = result['results'][0]['file.id']
@@ -29,6 +27,8 @@ def addAnnotation(syn, data_round):
 	metadata['organ'] = metadata['organ'].fillna('')
 	metadata['sex'] = metadata['sex'].fillna('')
 	metadata['tumorPurity(percent) '] = metadata['tumorPurity(percent) '].fillna('')
+	metadata['exomePulldownFile'][metadata['exomePulldownFile'] == "TESLA_EXOME_REGIONS.bed.gz"] = "syn8313637"
+	metadata['exomePulldownFile'][metadata['exomePulldownFile'] == "TESLA_EXOME_REGIONS2.bed"] = "syn8348425"
 	metadata.apply(lambda x: addAnnotationHelper(x, data_round), axis=1)
 
 def perform_add(syn, args):
