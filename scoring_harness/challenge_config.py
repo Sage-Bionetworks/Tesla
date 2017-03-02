@@ -76,7 +76,7 @@ def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
     if submissionName.endswith(".zip"):
         assert submissionName == "%s.zip" % patientId, "Zip file must be named patientId.zip"
         #Unzip files here
-        dirname = submission.entity.cacheDir
+        dirname = os.path.dirname(submission.entity.path)
         try:
             zfile = zipfile.ZipFile(submission.filePath)
         except zipfile.BadZipfile as e:
