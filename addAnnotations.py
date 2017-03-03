@@ -18,7 +18,7 @@ def addAnnotationHelper(x, data_round):
 	return(ent.id)
 
 def addAnnotation(syn, data_round):
-	metadataPath = syn.get("syn8303410").path
+	metadataPath = syn.get("syn8371011").path
 	metadata = pd.read_csv(metadataPath)
 	metadata['qcFileName'] = metadata['qcFileName'].fillna('')
 	metadata['checkpointInhibitor'] = metadata['checkpointInhibitor'].fillna('')
