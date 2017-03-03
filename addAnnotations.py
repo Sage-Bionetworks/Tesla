@@ -24,9 +24,12 @@ def addAnnotation(syn, data_round):
 	metadata['checkpointInhibitor'] = metadata['checkpointInhibitor'].fillna('')
 	metadata['classIHLAalleles'] = metadata['classIHLAalleles'].fillna('')
 	metadata['isTreated'] = metadata['isTreated'].fillna('')
+	metadata['pairedEndId'] = metadata['pairedEndId'].fillna('')
 	metadata['organ'] = metadata['organ'].fillna('')
 	metadata['sex'] = metadata['sex'].fillna('')
+	metadata['matchedSample'] = metadata['matchedSample'].fillna('')
 	metadata['tumorPurity(percent) '] = metadata['tumorPurity(percent) '].fillna('')
+	metadata['exomePulldownFile'] = metadata['exomePulldownFile'].fillna('')
 	metadata['exomePulldownFile'][metadata['exomePulldownFile'] == "TESLA_EXOME_REGIONS.bed.gz"] = "syn8313637"
 	metadata['exomePulldownFile'][metadata['exomePulldownFile'] == "TESLA_EXOME_REGIONS2.bed"] = "syn8348425"
 	metadata.apply(lambda x: addAnnotationHelper(x, data_round), axis=1)
