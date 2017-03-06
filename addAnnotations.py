@@ -1,6 +1,7 @@
 import synapseclient
 import pandas as pd
 import argparse
+import math
 
 def addAnnotationHelper(x, data_round):
 	result = syn.query('select id from file where parentId =="%s" and name == "%s"' %(x['uploadAccount'],x['teslaName']))
@@ -11,7 +12,15 @@ def addAnnotationHelper(x, data_round):
 	annotations.pop('teslaName')
 	annotations.pop('uploadAccount')
 	annotations.pop('rawName')
-	annotations['tumorPurityPercent'] = str(annotations.pop('tumorPurity(percent) '))
+	toRemove = []
+	for key in annotations:
+		if not isinstance(annotations[key],str):
+			if math.isnan(annotations[key]) or annotations[key] == "Not Applicable ":
+				toRemove.append(key)
+	for key in toRemove:
+		annotations.pop(key)
+	if annotations.get('tumorPurity(percent) ') is not None:
+		annotations['tumorPurityPercent'] = annotations.pop('tumorPurity(percent) ')
 	ent.annotations = annotations
 	ent.round = data_round
 	syn.store(ent)
@@ -20,16 +29,6 @@ def addAnnotationHelper(x, data_round):
 def addAnnotation(syn, data_round):
 	metadataPath = syn.get("syn8371011").path
 	metadata = pd.read_csv(metadataPath)
-	metadata['qcFileName'] = metadata['qcFileName'].fillna('')
-	metadata['checkpointInhibitor'] = metadata['checkpointInhibitor'].fillna('')
-	metadata['classIHLAalleles'] = metadata['classIHLAalleles'].fillna('')
-	metadata['isTreated'] = metadata['isTreated'].fillna('')
-	metadata['pairedEndId'] = metadata['pairedEndId'].fillna('')
-	metadata['organ'] = metadata['organ'].fillna('')
-	metadata['sex'] = metadata['sex'].fillna('')
-	metadata['matchedSample'] = metadata['matchedSample'].fillna('')
-	metadata['tumorPurity(percent) '] = metadata['tumorPurity(percent) '].fillna('')
-	metadata['exomePulldownFile'] = metadata['exomePulldownFile'].fillna('')
 	metadata['exomePulldownFile'][metadata['exomePulldownFile'] == "TESLA_EXOME_REGIONS.bed.gz"] = "syn8313637"
 	metadata['exomePulldownFile'][metadata['exomePulldownFile'] == "TESLA_EXOME_REGIONS2.bed"] = "syn8348425"
 	metadata.apply(lambda x: addAnnotationHelper(x, data_round), axis=1)
