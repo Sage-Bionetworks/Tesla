@@ -179,8 +179,8 @@ def validate(evaluation, canCancel, dry_run=False):
     sys.stdout.flush()
     team_mapping_table = syn.tableQuery('select * from syn8220615')
     team_mapping = team_mapping_table.asDataFrame()
-    metadataPath = syn.get("syn8290709").path
-    metadata = pd.read_excel(metadataPath)
+    metadataPath = syn.get("syn8371011").path
+    metadata = pd.read_csv(metadataPath)
     patientIds = set(metadata.patientId)
     
     for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
@@ -192,7 +192,9 @@ def validate(evaluation, canCancel, dry_run=False):
         print "validating", submission.id, submission.name
         addAnnots = {}
         try:
-            is_valid, validation_message, addAnnots = conf.validate_submission(syn, evaluation, submission, team_mapping, patientIds)
+            is_valid, validation_message, addAnnots = conf.validate_teamname(syn, evaluation, submission, team_mapping)
+            is_valid, validation_message, patientAnnot = conf.validate_submission(syn, evaluation, submission, patientIds)
+            addAnnots.update(patientAnnot)
         except Exception as ex1:
             is_valid = False
             print "Exception during validation:", type(ex1), ex1, ex1.message
@@ -204,7 +206,10 @@ def validate(evaluation, canCancel, dry_run=False):
             status.canCancel = True
         if not is_valid:
             addAnnots.update({"FAILURE_REASON":validation_message})
-        add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=True)
+        else:
+            addAnnots.update({"FAILURE_REASON":'',
+                              "submissionName":submission.entity.name})
+        add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=False)
         status = update_single_submission_status(status, add_annotations)
 
         if not dry_run:
