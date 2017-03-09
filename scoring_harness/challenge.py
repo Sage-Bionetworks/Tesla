@@ -69,6 +69,9 @@ UUID_REGEX = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 # A module level variable to hold the Synapse connection
 syn = None
 
+def randomString():
+    return(''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)))
+
 
 def to_column_objects(leaderboard_columns):
     """
@@ -193,6 +196,8 @@ def validate(evaluation, canCancel, dry_run=False):
         addAnnots = {}
         try:
             is_valid, validation_message, addAnnots = conf.validate_teamname(syn, evaluation, submission, team_mapping)
+            add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=True)
+            status = update_single_submission_status(status, add_annotations)
             is_valid, validation_message, patientAnnot = conf.validate_submission(syn, evaluation, submission, patientIds)
             addAnnots.update(patientAnnot)
         except Exception as ex1:
@@ -209,6 +214,8 @@ def validate(evaluation, canCancel, dry_run=False):
         else:
             addAnnots.update({"FAILURE_REASON":'',
                               "submissionName":submission.entity.name})
+        uniqueId = randomString()
+        addAnnots.update({"uniqueId":uniqueId})
         add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=False)
         status = update_single_submission_status(status, add_annotations)
 
@@ -221,7 +228,7 @@ def validate(evaluation, canCancel, dry_run=False):
                 userIds=[submission.userId],
                 username=get_user_name(profile),
                 queue_name=evaluation.name,
-                submission_id=submission.id,
+                submission_id=uniqueId,
                 submission_name=submission.name)
         else:
             if isinstance(ex1, AssertionError):
@@ -235,7 +242,7 @@ def validate(evaluation, canCancel, dry_run=False):
                 userIds= sendTo,
                 username=username,
                 queue_name=evaluation.name,
-                submission_id=submission.id,
+                submission_id=uniqueId,
                 submission_name=submission.name,
                 message=validation_message)
 

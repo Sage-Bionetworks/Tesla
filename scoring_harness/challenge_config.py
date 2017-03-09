@@ -68,11 +68,6 @@ def validate_submission(syn, evaluation, submission, patientIds):
     :returns: (True, message) if validated, (False, message) if
               validation fails or throws exception
     """
-    # assert 'teamId' in submission, "Must submit as part of a team and not as an individual"
-    # team = syn.getTeam(submission.teamId)
-    # teamIndex = team_mapping['realTeam'] == team['name']
-    # assert sum(teamIndex) == 1, "Must submit as one of these teams: %s" % ", ".join(team_mapping['realTeam'])
-    # teamDict = {'team':team_mapping['alias'][teamIndex].values[0]}
     submissionName = submission.entity.name
     if not submission.entity.name.endswith("bam"):
         submission = syn.getSubmission(submission.id)
