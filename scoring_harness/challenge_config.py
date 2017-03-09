@@ -53,19 +53,26 @@ for q in evaluation_queues:
 ## where the table holds a leaderboard for that question
 leaderboard_tables = {}
 
+def validate_teamname(syn, evaluation, submission, team_mapping):
+    assert 'teamId' in submission, "Must submit as part of a team and not as an individual"
+    team = syn.getTeam(submission.teamId)
+    teamIndex = team_mapping['realTeam'] == team['name']
+    assert sum(teamIndex) == 1, "Must submit as one of these teams: %s" % ", ".join(team_mapping['realTeam'])
+    teamDict = {'team':team_mapping['alias'][teamIndex].values[0]}
+    return True, "Validation passed!", teamDict
 
-def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
+def validate_submission(syn, evaluation, submission, patientIds):
     """
     Find the right validation function and validate the submission.
 
     :returns: (True, message) if validated, (False, message) if
               validation fails or throws exception
     """
-    assert 'teamId' in submission, "Must submit as part of a team and not as an individual"
-    team = syn.getTeam(submission.teamId)
-    teamIndex = team_mapping['realTeam'] == team['name']
-    assert sum(teamIndex) == 1, "Must submit as one of these teams: %s" % ", ".join(team_mapping['realTeam'])
-    teamDict = {'team':team_mapping['alias'][teamIndex].values[0]}
+    # assert 'teamId' in submission, "Must submit as part of a team and not as an individual"
+    # team = syn.getTeam(submission.teamId)
+    # teamIndex = team_mapping['realTeam'] == team['name']
+    # assert sum(teamIndex) == 1, "Must submit as one of these teams: %s" % ", ".join(team_mapping['realTeam'])
+    # teamDict = {'team':team_mapping['alias'][teamIndex].values[0]}
     submissionName = submission.entity.name
     if not submission.entity.name.endswith("bam"):
         submission = syn.getSubmission(submission.id)
@@ -96,7 +103,7 @@ def validate_submission(syn, evaluation, submission, team_mapping, patientIds):
         TESLA_val.validate_files(filelist,patientId,validatingBAM=False)
     else:
         assert submissionName in ["%s_EXOME_N.bam" % patientId,"%s_EXOME_T.bam" % patientId,"%s_RNA_T.bam" % patientId], "Bam files must be named patientId_EXOME_N.bam, patientId_EXOME_T.bam or patientId_RNA_T.bam"
-    teamDict['patientId'] = patientId
+    teamDict = {'patientId':patientId}
     return True, "Validation passed!", teamDict
 
 

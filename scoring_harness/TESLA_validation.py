@@ -26,7 +26,7 @@ def validate_1(submission_filepath):
 	#NO duplicated VAR_ID
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_1.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	#CHECK: CHROM must be 1-22 or X
 	assert all(submission.CHROM.isin(list(range(1,23)) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])]))
 	#CHECK: integer, string and float columns are correct types
@@ -45,7 +45,7 @@ def validate_2(submission_filepath):
 
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_2.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"RANK"]
 	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
@@ -61,14 +61,14 @@ def validate_2(submission_filepath):
 
 def validate_3(submission_filepath):
 	"""
-	Validates second TESLA file
+	Validates third TESLA file
 
 	:param submission_filepath: Path of submission file TESLA_OUT_3.csv
 	"""
 	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_3.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"STEP_ID"]
 	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
 
@@ -82,10 +82,15 @@ def validate_3(submission_filepath):
 
 #Validate workflow
 def validate_4(submission_filepath):
+	"""
+	Validates fourth TESLA file
+
+	:param submission_filepath: Path of submission file TESLA_OUT_4.csv
+	"""
 	required_cols = pd.Series(["STEP_ID","PREV_STEP_ID","DESC"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_4.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	checkType(submission, ["STEP_ID","PREV_STEP_ID"], int)
 	checkType(submission, ["DESC"], str)
@@ -122,7 +127,7 @@ def validateVCF(filePath):
 		raise ValueError("Your vcf must start with the header #CHROM")
 
 	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "These column headers are missing from your file: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_VCF.vcf: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	#Require that they report variants mapped to either GRCh37 or hg19 without
 	#the chr-prefix. variants on chrM are not supported
