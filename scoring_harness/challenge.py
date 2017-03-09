@@ -192,7 +192,7 @@ def validate(evaluation, canCancel, dry_run=False):
         print "validating", submission.id, submission.name
         addAnnots = {}
         try:
-            is_valid, validation_message, addAnnots = conf.validate_teamname(syn, evaluation, submission, team_mapping):
+            is_valid, validation_message, addAnnots = conf.validate_teamname(syn, evaluation, submission, team_mapping)
             is_valid, validation_message, patientAnnot = conf.validate_submission(syn, evaluation, submission, patientIds)
             addAnnots.update(patientAnnot)
         except Exception as ex1:
