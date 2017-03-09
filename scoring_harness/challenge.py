@@ -39,6 +39,7 @@ import json
 import math
 import os
 import random
+import string
 import re
 import sys
 import tarfile
