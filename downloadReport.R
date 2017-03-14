@@ -1,5 +1,7 @@
 install.packages("RMySQL")
 library(RMySQL)
+library(synapseClient)
+synapseLogin()
 mydb = dbConnect(MySQL(), user='tyu', password="sAGE()dw!", host='warehouse.c95bbsvwbjlu.us-east-1.rds.amazonaws.com')
 
 downloadReport1 = dbSendQuery(mydb, "SELECT PAR.ENTITY_ID, AR.USER_ID ,COUNT(*)
@@ -30,7 +32,35 @@ downloadReport2Data$ENTITY_ID <- downloadReport2Data$ID
 downloadReport2Data$ID <- NULL
 total <- rbind(downloadReport1Data,
           downloadReport2Data)
-write.csv(total,"Tesla_download_Stats.txt")
+write.csv(total,"Tesla_download_Stats.txt") #uploaded to syn8442870
+table(total$ENTITY_ID)
+
+teams = synTableQuery('SELECT * FROM syn8220615')
+teams@values$realTeam
+syn.getTeam()
+
+teamMembers <- sapply(teams@values$realTeam, function(teamName) {
+  teamId <- synRestGET(paste0('/teams?fragment=',teamName))$results[[1]]$id
+  results <- synRestGET(paste0('/teamMembers/',teamId))
+  members <- unlist(lapply(results$results, function(x){
+    x$member$ownerId
+  }))
+  members[members != "3324230"]
+})
+
+usersDownloadFile <- aggregate(USER_ID ~ ENTITY_ID, total, c)
+lapply(usersDownloadFile$USER_ID, function(users){
+  users = unlist(users)
+  lapply(teamMembers, function(members) {
+    members <- unlist(members)
+    if (length(members) >0) {
+      if (any(members %in% users)) {
+        TRUE
+      }
+    }
+  }) 
+})
+
 #Number of teams downloaded data
 #Which teams have downloaded the data
 #Which ones haven't
