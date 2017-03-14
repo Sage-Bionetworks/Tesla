@@ -26,14 +26,11 @@ downloadReport2 = dbSendQuery(mydb, 'SELECT NODE.ID, FDR.USER_ID ,COUNT(*)
                                     GROUP BY NODE.ID, FDR.USER_ID;')
 
 downloadReport2Data = fetch(downloadReport2, n=-1)
-head(downloadReport1Data)
-head(downloadReport2Data)
 downloadReport2Data$ENTITY_ID <- downloadReport2Data$ID
 downloadReport2Data$ID <- NULL
 total <- rbind(downloadReport1Data,
           downloadReport2Data)
 write.csv(total,"Tesla_download_Stats.txt") #uploaded to syn8442870
-table(total$ENTITY_ID)
 
 teams = synTableQuery('SELECT * FROM syn8220615')
 teams@values$realTeam
@@ -47,25 +44,37 @@ teamMembers <- sapply(teams@values$realTeam, function(teamName) {
   }))
   members[members != "3324230"]
 })
+teamMembers$TESLA_Consortium_Admins <- NULL
 
 usersDownloadFile <- aggregate(USER_ID ~ ENTITY_ID, total, c)
-downloadStats <- lapply(usersDownloadFile$USER_ID, function(users){
-  users = unlist(users)
-  lapply(teamMembers, function(members) {
+downloadStats <- apply(usersDownloadFile[!usersDownloadFile$ENTITY_ID %in% c(8303327,8303410),], 1, function(info){
+  users = unlist(info$USER_ID)
+  entId = info$ENTITY_ID
+  ent = synGet(paste0("syn",entId), downloadFile=F)
+  exist = lapply(teamMembers, function(members) {
     members <- unlist(members)
     if (length(members) >0) {
       if (any(members %in% users)) {
         TRUE
+      } else {
+        FALSE
       }
     }
-  }) 
+  })
+  data.frame("fileName" = ent@properties$name, "notDownloaded"= paste(names(exist)[unlist(exist)==F],collapse = ","),"downloaded"= paste(names(exist)[unlist(exist)==T],collapse = ","))
 })
 
-unlist(downloadStats)
+total = do.call(rbind,downloadStats)
+
+write.table(total, "DownloadStats.csv",row.names = F,sep="\t",quote = F)
 #Number of teams downloaded data
 #Which teams have downloaded the data
 #Which ones haven't
+numberNotDownloaded <- sapply(as.vector(total$notDownloaded), function(x){
+  length(unlist(strsplit(x, ",")))
+})
 
+total[numberNotDownloaded == 13,"fileName"]
 #group by ID, print out teams that have not downloaded data
 #Teams that haven't downloaded the fastqs
 
