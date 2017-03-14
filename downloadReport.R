@@ -49,7 +49,7 @@ teamMembers <- sapply(teams@values$realTeam, function(teamName) {
 })
 
 usersDownloadFile <- aggregate(USER_ID ~ ENTITY_ID, total, c)
-lapply(usersDownloadFile$USER_ID, function(users){
+downloadStats <- lapply(usersDownloadFile$USER_ID, function(users){
   users = unlist(users)
   lapply(teamMembers, function(members) {
     members <- unlist(members)
@@ -61,6 +61,7 @@ lapply(usersDownloadFile$USER_ID, function(users){
   }) 
 })
 
+unlist(downloadStats)
 #Number of teams downloaded data
 #Which teams have downloaded the data
 #Which ones haven't
