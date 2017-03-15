@@ -1,4 +1,3 @@
-install.packages("RMySQL")
 library(RMySQL)
 library(synapseClient)
 synapseLogin()
@@ -28,13 +27,13 @@ downloadReport2 = dbSendQuery(mydb, 'SELECT NODE.ID, FDR.USER_ID ,COUNT(*)
 downloadReport2Data = fetch(downloadReport2, n=-1)
 downloadReport2Data$ENTITY_ID <- downloadReport2Data$ID
 downloadReport2Data$ID <- NULL
-total <- rbind(downloadReport1Data,
+downloadStats <- rbind(downloadReport1Data,
           downloadReport2Data)
 
 
-write.csv(total,"Tesla_download_Stats.txt") #uploaded to syn8442870
-downloadStatsEnt <- synGet("syn8442870")
-downloadStats <- read.csv(getFileLocation(downloadStatsEnt))
+#write.csv(total,"Tesla_download_Stats.txt") #uploaded to syn8442870
+#downloadStatsEnt <- synGet("syn8442870")
+#downloadStats <- read.csv(getFileLocation(downloadStatsEnt))
 
 teams = synTableQuery('SELECT * FROM syn8220615')
 
@@ -80,9 +79,8 @@ sumFastqDownloads <- apply(teamsDownloaded[grepl("*fastq.gz",row.names(teamsDown
 names(sumFastqDownloads[sumFastqDownloads == 0])
 
 sumNotFastqDownloads <- apply(teamsDownloaded[!grepl("*fastq.gz",row.names(teamsDownloaded)),],1, sum)
-
+sumNotFastqDownloads
 NotFastqDownloadStats <- data.frame("downloadStats" = sumNotFastqDownloads)
 write.csv(NotFastqDownloadStats, "vcfbam_downloadStats.csv",quote=F)
-
 
 #Of the other fileTypes, how many teams have downloaded (fileType)
