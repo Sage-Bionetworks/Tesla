@@ -30,11 +30,13 @@ downloadReport2Data$ENTITY_ID <- downloadReport2Data$ID
 downloadReport2Data$ID <- NULL
 total <- rbind(downloadReport1Data,
           downloadReport2Data)
+
+
 write.csv(total,"Tesla_download_Stats.txt") #uploaded to syn8442870
+downloadStatsEnt <- synGet("syn8442870")
+downloadStats <- read.csv(getFileLocation(downloadStatsEnt))
 
 teams = synTableQuery('SELECT * FROM syn8220615')
-teams@values$realTeam
-syn.getTeam()
 
 teamMembers <- sapply(teams@values$realTeam, function(teamName) {
   teamId <- synRestGET(paste0('/teams?fragment=',teamName))$results[[1]]$id
@@ -46,8 +48,8 @@ teamMembers <- sapply(teams@values$realTeam, function(teamName) {
 })
 teamMembers$TESLA_Consortium_Admins <- NULL
 
-usersDownloadFile <- aggregate(USER_ID ~ ENTITY_ID, total, c)
-downloadStats <- apply(usersDownloadFile[!usersDownloadFile$ENTITY_ID %in% c(8303327,8303410),], 1, function(info){
+usersDownloadFile <- aggregate(USER_ID ~ ENTITY_ID, downloadStats, c)
+teamDownloadStats <- apply(usersDownloadFile[!usersDownloadFile$ENTITY_ID %in% c(8303327,8303410),], 1, function(info){
   users = unlist(info$USER_ID)
   entId = info$ENTITY_ID
   ent = synGet(paste0("syn",entId), downloadFile=F)
@@ -61,21 +63,26 @@ downloadStats <- apply(usersDownloadFile[!usersDownloadFile$ENTITY_ID %in% c(830
       }
     }
   })
-  data.frame("fileName" = ent@properties$name, "notDownloaded"= paste(names(exist)[unlist(exist)==F],collapse = ","),"downloaded"= paste(names(exist)[unlist(exist)==T],collapse = ","))
+  data <- data.frame(unlist(exist))
+  colnames(data) <- ent@properties$name
+  data
+  #data.frame("fileName" = ent@properties$name, "notDownloaded"= paste(names(exist)[unlist(exist)==F],collapse = ","),"downloaded"= paste(names(exist)[unlist(exist)==T],collapse = ","))
 })
 
-total = do.call(rbind,downloadStats)
-
-write.table(total, "DownloadStats.csv",row.names = F,sep="\t",quote = F)
+total = do.call(cbind,teamDownloadStats)
+teamsDownloaded <- t(total)
+write.table(teamsDownloaded, "DownloadStats.csv",sep="\t",quote = F)
 #Number of teams downloaded data
 #Which teams have downloaded the data
 #Which ones haven't
-numberNotDownloaded <- sapply(as.vector(total$notDownloaded), function(x){
-  length(unlist(strsplit(x, ",")))
-})
 
-total[numberNotDownloaded == 13,"fileName"]
-#group by ID, print out teams that have not downloaded data
-#Teams that haven't downloaded the fastqs
+sumFastqDownloads <- apply(teamsDownloaded[grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
+names(sumFastqDownloads[sumFastqDownloads == 0])
+
+sumNotFastqDownloads <- apply(teamsDownloaded[!grepl("*fastq.gz",row.names(teamsDownloaded)),],1, sum)
+
+NotFastqDownloadStats <- data.frame("downloadStats" = sumNotFastqDownloads)
+write.csv(NotFastqDownloadStats, "vcfbam_downloadStats.csv",quote=F)
+
 
 #Of the other fileTypes, how many teams have downloaded (fileType)
