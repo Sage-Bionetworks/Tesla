@@ -41,20 +41,20 @@ def validate_2(submission_filepath):
 	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
 	"""
 	#VAR_ID have to check out with first file
-	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ"])
+	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO"])
 
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_2.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"RANK"]
-	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
+	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','REF_EPI_SEQ']
 	#CHECK: RANK must be ordered from 1 to nrows
 	assert all(submission.RANK == range(1, len(submission)+1)), "RANK column must be sequencial and must start from 1 to the length of the data"
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 	checkType(submission, string_cols, str)
-	checkType(submission, ['HLA_ALLELE_MUT'], str, optional=True)
+	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, optional=True)
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, optional=True)
 
 	return(True,"Passed Validation!")
@@ -65,12 +65,12 @@ def validate_3(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_3.csv
 	"""
-	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","MUT_EPI_SEQ","WT_EPI_SEQ","STEP_ID"])
+	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_3.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"STEP_ID"]
-	string_cols = ['HLA_ALLELE','MUT_EPI_SEQ','WT_EPI_SEQ']
+	string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ"]
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Validate TESLA files per sample')
 	parser.add_argument("file", type=str, nargs="+",
-						help='path to TESLA files (Must have TESLA_OUT_{1..4}.csv and TESLA_VCF.vcf), bam files are optional')
+						help='path to TESLA files (Must have TESLA_OUT_{1..4}.csv and TESLA_VCF.vcf), bam files are optional (include --validatingBAM and --patientId parameters if you include the BAM files)')
 	parser.add_argument("--validatingBAM",action="store_true")
 	parser.add_argument("--patientId",type=str,default=None,
 						help='Patient Id')
