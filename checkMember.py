@@ -2,7 +2,7 @@ import synapseclient
 import pandas as pd
 syn = synapseclient.login()
 
-def checkIfTesla(newMember):
+def checkIfTesla():
 	teams = syn.tableQuery('SELECT * FROM syn8220615')
 	teamNames = teams.asDataFrame()
 	total_members = set()
@@ -36,3 +36,6 @@ def getStats():
 				teamstats.write("%s\t%s\n" % (team['name'],", ".join(totals)))
 			if len(totals) == 1 and "thomas.yu" in totals:
 				print(totals)
+
+checkIfTesla()
+getStats()
