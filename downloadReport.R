@@ -65,7 +65,6 @@ teamDownloadStats <- apply(usersDownloadFile[!usersDownloadFile$ENTITY_ID %in% c
   data <- data.frame(unlist(exist))
   colnames(data) <- ent@properties$name
   data
-  #data.frame("fileName" = ent@properties$name, "notDownloaded"= paste(names(exist)[unlist(exist)==F],collapse = ","),"downloaded"= paste(names(exist)[unlist(exist)==T],collapse = ","))
 })
 
 total = do.call(cbind,teamDownloadStats)
@@ -77,7 +76,7 @@ write.table(teamsDownloaded, "DownloadStats.csv",sep="\t",quote = F)
 
 sumFastqDownloads <- apply(teamsDownloaded[grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
 names(sumFastqDownloads[sumFastqDownloads == 0])
-
+sumFastqDownloads
 sumNotFastqDownloads <- apply(teamsDownloaded[!grepl("*fastq.gz",row.names(teamsDownloaded)),],1, sum)
 sumNotFastqDownloads
 NotFastqDownloadStats <- data.frame("downloadStats" = sumNotFastqDownloads)
