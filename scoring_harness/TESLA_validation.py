@@ -28,7 +28,11 @@ def validate_1(submission_filepath):
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_1.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	#CHECK: CHROM must be 1-22 or X
-	assert all(submission.CHROM.isin(list(range(1,23)) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])]))
+	chroms = range(1,23)
+	chroms = [str(i) for i in chroms]
+	chroms.append("X")
+	submission.CHROM = submission.CHROM.astype(str)
+	assert all(submission.CHROM.isin(chroms)), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 
@@ -131,7 +135,11 @@ def validateVCF(filePath):
 
 	#Require that they report variants mapped to either GRCh37 or hg19 without
 	#the chr-prefix. variants on chrM are not supported
-	assert all(submission['#CHROM'].isin(list(range(1,23)) + ["X"])), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(range(1,23) + ["X"])]))
+	chroms = range(1,23)
+	chroms = [str(i) for i in chroms]
+	chroms.append("X")
+	submission['#CHROM'] = submission['#CHROM'].astype(str)
+	assert all(submission['#CHROM'].isin(chroms)), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
 	#No white spaces
 	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
 	assert sum(temp) == 0, "Your vcf file should not have any white spaces in any of the columns"

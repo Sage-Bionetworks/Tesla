@@ -46,6 +46,8 @@ teamMembers <- sapply(teams@values$realTeam, function(teamName) {
   members[members != "3324230"]
 })
 teamMembers$TESLA_Consortium_Admins <- NULL
+#usersDownloadFile[c(15,26,37,47,70,71,73),]
+#print(synGet("syn8274434",downloadFile=F)@properties$name)
 
 usersDownloadFile <- aggregate(USER_ID ~ ENTITY_ID, downloadStats, c)
 teamDownloadStats <- apply(usersDownloadFile[!usersDownloadFile$ENTITY_ID %in% c(8303327,8303410),], 1, function(info){
