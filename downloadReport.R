@@ -1,7 +1,7 @@
 library(RMySQL)
 library(synapseClient)
 synapseLogin()
-mydb = dbConnect(MySQL(), user='tyu', password="sAGE()dw!", host='warehouse.c95bbsvwbjlu.us-east-1.rds.amazonaws.com')
+mydb = dbConnect(MySQL(), user='tyu', password="", host='warehouse.c95bbsvwbjlu.us-east-1.rds.amazonaws.com')
 
 downloadReport1 = dbSendQuery(mydb, "SELECT PAR.ENTITY_ID, AR.USER_ID ,COUNT(*)
                                      FROM warehouse.PROCESSED_ACCESS_RECORD PAR,
@@ -21,7 +21,7 @@ downloadReport2 = dbSendQuery(mydb, 'SELECT NODE.ID, FDR.USER_ID ,COUNT(*)
                                     (SELECT ID, CREATED_BY FROM warehouse.NODE_SNAPSHOT WHERE (ID, TIMESTAMP) IN (SELECT ID, TIMESTAMP FROM tyu.syn7362874)) AS NODE
                                     WHERE FDR.ASSOCIATION_OBJECT_ID = NODE.ID
                                     AND FDR.ASSOCIATION_OBJECT_TYPE = "FileEntity"
-                                    AND FDR.TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (7*24*60*60*1000) AND  unix_timestamp(curdate())*1000
+                                    AND FDR.TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (30*24*60*60*1000) AND  unix_timestamp(curdate())*1000
                                     GROUP BY NODE.ID, FDR.USER_ID;')
 
 downloadReport2Data = fetch(downloadReport2, n=-1)
@@ -67,7 +67,6 @@ teamDownloadStats <- apply(usersDownloadFile[!usersDownloadFile$ENTITY_ID %in% c
   data <- data.frame(unlist(exist))
   colnames(data) <- ent@properties$name
   data
-  #data.frame("fileName" = ent@properties$name, "notDownloaded"= paste(names(exist)[unlist(exist)==F],collapse = ","),"downloaded"= paste(names(exist)[unlist(exist)==T],collapse = ","))
 })
 
 total = do.call(cbind,teamDownloadStats)
@@ -79,7 +78,7 @@ write.table(teamsDownloaded, "DownloadStats.csv",sep="\t",quote = F)
 
 sumFastqDownloads <- apply(teamsDownloaded[grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
 names(sumFastqDownloads[sumFastqDownloads == 0])
-
+sumFastqDownloads
 sumNotFastqDownloads <- apply(teamsDownloaded[!grepl("*fastq.gz",row.names(teamsDownloaded)),],1, sum)
 sumNotFastqDownloads
 NotFastqDownloadStats <- data.frame("downloadStats" = sumNotFastqDownloads)
