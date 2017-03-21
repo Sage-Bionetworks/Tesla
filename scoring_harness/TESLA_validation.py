@@ -21,6 +21,7 @@ def validate_1(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_1.csv
 	"""
+	print("VALIDATING %s" % submission_filepath)
 	required_cols = pd.Series(["VAR_ID","CHROM","POS","OA_CALLER"])
 	integer_cols = ['VAR_ID','POS']
 	#NO duplicated VAR_ID
@@ -45,6 +46,7 @@ def validate_2(submission_filepath):
 	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
 	"""
 	#VAR_ID have to check out with first file
+	print("VALIDATING %s" % submission_filepath)
 	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO"])
 
 	submission = pd.read_csv(submission_filepath)
@@ -69,6 +71,7 @@ def validate_3(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_3.csv
 	"""
+	print("VALIDATING %s" % submission_filepath)
 	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
@@ -91,6 +94,7 @@ def validate_4(submission_filepath):
 
 	:param submission_filepath: Path of submission file TESLA_OUT_4.csv
 	"""
+	print("VALIDATING %s" % submission_filepath)
 	required_cols = pd.Series(["STEP_ID","PREV_STEP_ID","DESC"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
@@ -119,6 +123,7 @@ def validateVCF(filePath):
 
 	:returns:             Text with all the errors in the VCF file
 	"""
+	print("VALIDATING %s" % filePath)
 	required_cols = pd.Series(["#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT","TUMOR","NORMAL"])
 	#FORMAT is optional
 	with open(filePath,"r") as foo:
@@ -174,6 +179,7 @@ validation_func = {"TESLA_OUT_1.csv":validate_1,
 def validate_files(filelist, patientId, validatingBAM=False):
 	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv","TESLA_VCF.vcf"]
 	if validatingBAM:
+		print("VALIDATING BAMS")
 		required.extend(["%s_EXOME_N.bam" % patientId ,"%s_EXOME_T.bam"% patientId,"%s_RNA_T.bam"% patientId])
 	requiredFiles = pd.Series(required)
 	basenames = [os.path.basename(name) for name in filelist]
@@ -183,7 +189,9 @@ def validate_files(filelist, patientId, validatingBAM=False):
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i]
 	order = pd.np.argsort(onlyTesla)
+	print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,2,3}.csv")
 	validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[2]])
+	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4}.csv")
 	validate_STEP_ID(onlyTesla[order[2]],onlyTesla[order[3]])
 	return(True, "Passed Validation!")
 
