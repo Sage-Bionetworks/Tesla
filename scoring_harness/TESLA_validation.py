@@ -3,6 +3,7 @@ import re
 import argparse
 import sys
 import math
+import operator
 try:
 	import pandas as pd
 except ImportError:
@@ -100,7 +101,12 @@ def validate_4(submission_filepath):
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_4.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
-	checkType(submission, ["STEP_ID","PREV_STEP_ID"], int)
+	checkType(submission, ["STEP_ID"], int)
+	prevStepIds = [i.split(";") for i in submission['PREV_STEP_ID']]
+	prevStepIds = reduce(operator.add, prevStepIds)
+	stepIds = submission['STEP_ID'].tolist()
+	stepIds.append(-1)
+	assert all([int(i) in stepIds for i in prevStepIds]), "PREV_STEP_IDs must be -1 or existing STEP_IDs"
 	checkType(submission, ["DESC"], str)
 
 	return(True,"Passed Validation!")
