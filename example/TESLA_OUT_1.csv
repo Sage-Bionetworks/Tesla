@@ -5,3 +5,5 @@ VAR_ID,CHROM,POS,OA_CALLER
 4,6,43250725,Samtools;Sniper
 5,22,16202096,VarScan
 6,X,38119219,Samtools;Sniper;VarScan;Strelka
+7,Y,38119219,Samtools;Sniper;VarScan;Strelka
+8,MT,38119219,Samtools;Sniper;VarScan;Strelka

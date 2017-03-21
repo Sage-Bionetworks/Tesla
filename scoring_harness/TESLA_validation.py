@@ -32,7 +32,7 @@ def validate_1(submission_filepath):
 	#CHECK: CHROM must be 1-22 or X
 	chroms = range(1,23)
 	chroms = [str(i) for i in chroms]
-	chroms.append("X")
+	chroms.extend(["X","Y","MT"])
 	submission.CHROM = submission.CHROM.astype(str)
 	assert all(submission.CHROM.isin(chroms)), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
 	#CHECK: integer, string and float columns are correct types
@@ -202,7 +202,7 @@ def validate_files(filelist, patientId, validatingBAM=False):
 	return(True, "Passed Validation!")
 
 def perform_validate(args):
-	validate_files(args.file, args.patientId)
+	validate_files(args.file, args.patientId, validatingBAM=args.validatingBAM)
 	print("Passed Validation")
 
 if __name__ == "__main__":

@@ -1,2 +1,3 @@
 #!/bin/sh
-python scoring_harness/TESLA_validation.py example/TESLA_OUT_1.csv example/TESLA_OUT_2.csv example/TESLA_OUT_3.csv example/TESLA_OUT_4.csv example/TESLA_VCF.vcf 
+python scoring_harness/TESLA_validation.py example/TESLA_OUT_1.csv example/TESLA_OUT_2.csv example/TESLA_OUT_3.csv example/TESLA_OUT_4.csv example/TESLA_VCF.vcf
+python scoring_harness/TESLA_validation.py example/TESLA_OUT_1.csv example/TESLA_OUT_2.csv example/TESLA_OUT_3.csv example/TESLA_OUT_4.csv example/TESLA_VCF.vcf example/1_EXOME_N.bam example/1_EXOME_T.bam example/1_RNA_T.bam --validatingBAM --patientId 1   
