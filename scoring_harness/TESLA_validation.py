@@ -34,7 +34,7 @@ def validate_1(submission_filepath):
 	chroms = [str(i) for i in chroms]
 	chroms.extend(["X","Y","MT"])
 	submission.CHROM = submission.CHROM.astype(str)
-	assert all(submission.CHROM.isin(chroms)), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
+	assert all(submission.CHROM.isin(chroms)), "CHROM values must be 1-22, X, Y or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 
