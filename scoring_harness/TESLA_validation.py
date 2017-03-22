@@ -34,9 +34,11 @@ def validate_1(submission_filepath):
 	chroms = [str(i) for i in chroms]
 	chroms.extend(["X","Y","MT"])
 	strchroms = ["chr"+i for i in chroms]
+	strchroms.pop()
+	strchroms.append("chrM")
 	submission.CHROM = submission.CHROM.astype(str)
 	if submission.CHROM[0].startswith("chr"):
-		assert all(submission.CHROM.isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrMT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(strchroms)]))
+		assert all(submission.CHROM.isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(strchroms)]))
 	else:
 		assert all(submission.CHROM.isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
 	#CHECK: integer, string and float columns are correct types
@@ -154,9 +156,11 @@ def validateVCF(filePath):
 	chroms = [str(i) for i in chroms]
 	chroms.extend(["X","Y","MT"])
 	strchroms = ["chr"+i for i in chroms]
+	strchroms.pop()
+	strchroms.append("chrM")
 	submission['#CHROM'] = submission['#CHROM'].astype(str)
 	if submission['#CHROM'][0].startswith("chr"):
-		assert all(submission['#CHROM'].isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrMT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(strchroms)]))
+		assert all(submission['#CHROM'].isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(strchroms)]))
 	else:
 		assert all(submission['#CHROM'].isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
 	#No white spaces
