@@ -150,7 +150,7 @@ def validateVCF(filePath):
 	chroms = [str(i) for i in chroms]
 	chroms.append("X")
 	submission['#CHROM'] = submission['#CHROM'].astype(str)
-	assert all(submission['#CHROM'].isin(chroms)), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
+	assert all(submission['#CHROM'].isin(chroms)), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
 	#No white spaces
 	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
 	assert sum(temp) == 0, "Your vcf file should not have any white spaces in any of the columns"
