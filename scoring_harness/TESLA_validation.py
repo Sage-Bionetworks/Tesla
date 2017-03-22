@@ -33,8 +33,9 @@ def validate_1(submission_filepath):
 	chroms = range(1,23)
 	chroms = [str(i) for i in chroms]
 	chroms.extend(["X","Y","MT"])
+	strchroms = ["chr"+i for i in chroms]
 	submission.CHROM = submission.CHROM.astype(str)
-	assert all(submission.CHROM.isin(chroms)), "CHROM values must be 1-22, X, Y or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
+	assert all(submission.CHROM.isin(chroms)) or all(submission.CHROM.isin(strchroms)), "CHROM values must be [1-22, X, Y, MT], or chr[1-22, X, Y, MT]. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int)
 
@@ -149,8 +150,9 @@ def validateVCF(filePath):
 	chroms = range(1,23)
 	chroms = [str(i) for i in chroms]
 	chroms.extend(["X","Y","MT"])
+	strchroms = ["chr"+i for i in chroms]
 	submission['#CHROM'] = submission['#CHROM'].astype(str)
-	assert all(submission['#CHROM'].isin(chroms)), "CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
+	assert all(submission['#CHROM'].isin(chroms)) or all(submission['#CHROM'].isin(strchroms)), "CHROM values must be [1-22, X, Y, MT], or chr[1-22, X, Y, MT]. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
 	#No white spaces
 	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
 	assert sum(temp) == 0, "Your vcf file should not have any white spaces in any of the columns"
