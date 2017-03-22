@@ -35,7 +35,10 @@ def validate_1(submission_filepath):
 	chroms.extend(["X","Y","MT"])
 	strchroms = ["chr"+i for i in chroms]
 	submission.CHROM = submission.CHROM.astype(str)
-	assert all(submission.CHROM.isin(chroms)) or all(submission.CHROM.isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be [1-22, X, Y, MT], or chr[1-22, X, Y, MT]. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
+	if submission.CHROM[0].startswith("chr"):
+		assert all(submission.CHROM.isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrMT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(strchroms)]))
+	else:
+		assert all(submission.CHROM.isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int, "TESLA_OUT_1.csv")
 
@@ -152,7 +155,10 @@ def validateVCF(filePath):
 	chroms.extend(["X","Y","MT"])
 	strchroms = ["chr"+i for i in chroms]
 	submission['#CHROM'] = submission['#CHROM'].astype(str)
-	assert all(submission['#CHROM'].isin(chroms)) or all(submission['#CHROM'].isin(strchroms)), "TESLA_VCF.vcf: CHROM values must be [1-22, X, Y, MT], or chr[1-22, X, Y, MT]. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
+	if submission['#CHROM'][0].startswith("chr"):
+		assert all(submission['#CHROM'].isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrMT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(strchroms)]))
+	else:
+		assert all(submission['#CHROM'].isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
 	#No white spaces
 	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
 	assert sum(temp) == 0, "TESLA_VCF.vcf: This file should not have any white spaces in any of the columns"
