@@ -148,9 +148,9 @@ def validateVCF(filePath):
 	#the chr-prefix. variants on chrM are not supported
 	chroms = range(1,23)
 	chroms = [str(i) for i in chroms]
-	chroms.append("X")
+	chroms.extend(["X","Y","MT"])
 	submission['#CHROM'] = submission['#CHROM'].astype(str)
-	assert all(submission['#CHROM'].isin(chroms)), "CHROM values must be 1-22, or X. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
+	assert all(submission['#CHROM'].isin(chroms)), "CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
 	#No white spaces
 	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
 	assert sum(temp) == 0, "Your vcf file should not have any white spaces in any of the columns"
