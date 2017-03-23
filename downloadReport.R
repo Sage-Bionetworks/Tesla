@@ -1,9 +1,13 @@
 library(RMySQL)
 library(synapseClient)
 synapseLogin()
+
+START = as.Date("2017-02-01")
+DAYS_BEFORE = as.numeric(Sys.Date() - START)
+
 mydb = dbConnect(MySQL(), user='tyu', password="", host='warehouse.c95bbsvwbjlu.us-east-1.rds.amazonaws.com')
 
-downloadReport1 = dbSendQuery(mydb, "SELECT PAR.ENTITY_ID, AR.USER_ID ,COUNT(*)
+downloadReport1 = dbSendQuery(mydb, sprintf("SELECT PAR.ENTITY_ID, AR.USER_ID ,COUNT(*)
                                      FROM warehouse.PROCESSED_ACCESS_RECORD PAR,
                                      warehouse.ACCESS_RECORD AR,
                                      (SELECT ID, CREATED_BY FROM warehouse.NODE_SNAPSHOT WHERE (ID, TIMESTAMP) IN (SELECT ID, TIMESTAMP FROM tyu.syn7362874)) AS NODE
@@ -11,18 +15,18 @@ downloadReport1 = dbSendQuery(mydb, "SELECT PAR.ENTITY_ID, AR.USER_ID ,COUNT(*)
                                      AND PAR.TIMESTAMP = AR.TIMESTAMP
                                      AND PAR.ENTITY_ID = NODE.ID
                                      AND PAR.NORMALIZED_METHOD_SIGNATURE IN ('GET /entity/#/file','GET /entity/#/version/#/file')
-                                     AND AR.TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (30*24*60*60*1000) AND  unix_timestamp(curdate())*1000
-                                     GROUP BY PAR.ENTITY_ID, AR.USER_ID ;")
+                                     AND AR.TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (%d*24*60*60*1000) AND  unix_timestamp(curdate())*1000
+                                     GROUP BY PAR.ENTITY_ID, AR.USER_ID ;",DAYS_BEFORE))
 
 downloadReport1Data = fetch(downloadReport1, n=-1)
 
-downloadReport2 = dbSendQuery(mydb, 'SELECT NODE.ID, FDR.USER_ID ,COUNT(*)
+downloadReport2 = dbSendQuery(mydb, sprintf('SELECT NODE.ID, FDR.USER_ID ,COUNT(*)
                                     FROM warehouse.FILE_DOWNLOAD_RECORD FDR,
                                     (SELECT ID, CREATED_BY FROM warehouse.NODE_SNAPSHOT WHERE (ID, TIMESTAMP) IN (SELECT ID, TIMESTAMP FROM tyu.syn7362874)) AS NODE
                                     WHERE FDR.ASSOCIATION_OBJECT_ID = NODE.ID
                                     AND FDR.ASSOCIATION_OBJECT_TYPE = "FileEntity"
-                                    AND FDR.TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (30*24*60*60*1000) AND  unix_timestamp(curdate())*1000
-                                    GROUP BY NODE.ID, FDR.USER_ID;')
+                                    AND FDR.TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (%d*24*60*60*1000) AND  unix_timestamp(curdate())*1000
+                                    GROUP BY NODE.ID, FDR.USER_ID;',DAYS_BEFORE))
 
 downloadReport2Data = fetch(downloadReport2, n=-1)
 downloadReport2Data$ENTITY_ID <- downloadReport2Data$ID
