@@ -43,6 +43,7 @@ def validate_1(submission_filepath):
 		assert all(submission.CHROM.isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int, "TESLA_OUT_1.csv")
+	checkType(submission, ['OA_CALLER'], str, "TESLA_OUT_1.csv")
 
 	return(True,"Passed Validation!")
 
@@ -62,10 +63,10 @@ def validate_2(submission_filepath):
 
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"RANK"]
 	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','REF_EPI_SEQ']
+	checkType(submission, integer_cols, int, 'TESLA_OUT_2.csv')
 	#CHECK: RANK must be ordered from 1 to nrows
 	assert all(submission.RANK == range(1, len(submission)+1)), "TESLA_OUT_2.csv: RANK column must be sequencial and must start from 1 to the length of the data"
 	#CHECK: integer, string and float columns are correct types
-	checkType(submission, integer_cols, int, 'TESLA_OUT_2.csv')
 	checkType(submission, string_cols, str, 'TESLA_OUT_2.csv')
 	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, 'TESLA_OUT_2.csv', optional=True)
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_2.csv', optional=True)
@@ -83,12 +84,13 @@ def validate_3(submission_filepath):
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_3.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"STEP_ID"]
+	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN']
 	string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ"]
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int, 'TESLA_OUT_3.csv')
 	checkType(submission, string_cols, str, 'TESLA_OUT_3.csv')
+	checkType(submission, ['STEP_ID'], int, 'TESLA_OUT_3.csv', optional=True)
 	checkType(submission, ['HLA_ALLELE_MUT'], str, 'TESLA_OUT_3.csv', optional=True)
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_3.csv', optional=True)
 
