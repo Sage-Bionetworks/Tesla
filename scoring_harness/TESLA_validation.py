@@ -9,12 +9,12 @@ try:
 except ImportError:
 	raise ImportError("Please make sure you have pandas installed: pip install pandas")
 
-def checkType(submission, cols, colType, optional=False):
+def checkType(submission, cols, colType, fileName, optional=False):
 	for col in cols:
 		if optional:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "All values in %s column must be type: %s [%s]" % (col, re.sub(".+['](.+)['].+","\\1",str(colType)), submission[col])
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "%s: All values in %s column must be type: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
 		else:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType))), "All values in %s column must be type: %s [%s]" % (col, re.sub(".+['](.+)['].+","\\1",str(colType)), submission[col])
+			assert all(submission[col].apply(lambda x: isinstance(x, colType))), "%s: All values in %s column must be type: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
 
 def validate_1(submission_filepath):
 	"""
@@ -28,15 +28,21 @@ def validate_1(submission_filepath):
 	#NO duplicated VAR_ID
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_1.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_1.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	#CHECK: CHROM must be 1-22 or X
 	chroms = range(1,23)
 	chroms = [str(i) for i in chroms]
 	chroms.extend(["X","Y","MT"])
+	strchroms = ["chr"+i for i in chroms]
+	strchroms.pop()
+	strchroms.append("chrM")
 	submission.CHROM = submission.CHROM.astype(str)
-	assert all(submission.CHROM.isin(chroms)), "CHROM values must be 1-22, X, Y or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
+	if submission.CHROM[0].startswith("chr"):
+		assert all(submission.CHROM.isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(strchroms)]))
+	else:
+		assert all(submission.CHROM.isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
 	#CHECK: integer, string and float columns are correct types
-	checkType(submission, integer_cols, int)
+	checkType(submission, integer_cols, int, "TESLA_OUT_1.csv")
 
 	return(True,"Passed Validation!")
 
@@ -52,17 +58,17 @@ def validate_2(submission_filepath):
 
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_2.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_2.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"RANK"]
 	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','REF_EPI_SEQ']
 	#CHECK: RANK must be ordered from 1 to nrows
-	assert all(submission.RANK == range(1, len(submission)+1)), "RANK column must be sequencial and must start from 1 to the length of the data"
+	assert all(submission.RANK == range(1, len(submission)+1)), "TESLA_OUT_2.csv: RANK column must be sequencial and must start from 1 to the length of the data"
 	#CHECK: integer, string and float columns are correct types
-	checkType(submission, integer_cols, int)
-	checkType(submission, string_cols, str)
-	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, optional=True)
-	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, optional=True)
+	checkType(submission, integer_cols, int, 'TESLA_OUT_2.csv')
+	checkType(submission, string_cols, str, 'TESLA_OUT_2.csv')
+	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, 'TESLA_OUT_2.csv', optional=True)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_2.csv', optional=True)
 
 	return(True,"Passed Validation!")
 
@@ -76,15 +82,15 @@ def validate_3(submission_filepath):
 	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_3.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_3.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"STEP_ID"]
 	string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ"]
 
 	#CHECK: integer, string and float columns are correct types
-	checkType(submission, integer_cols, int)
-	checkType(submission, string_cols, str)
-	checkType(submission, ['HLA_ALLELE_MUT'], str, optional=True)
-	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, optional=True)
+	checkType(submission, integer_cols, int, 'TESLA_OUT_3.csv')
+	checkType(submission, string_cols, str, 'TESLA_OUT_3.csv')
+	checkType(submission, ['HLA_ALLELE_MUT'], str, 'TESLA_OUT_3.csv', optional=True)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_3.csv', optional=True)
 
 	return(True,"Passed Validation!")
 
@@ -99,16 +105,16 @@ def validate_4(submission_filepath):
 	required_cols = pd.Series(["STEP_ID","PREV_STEP_ID","DESC"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_4.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-
-	checkType(submission, ["STEP_ID"], int)
+	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_4.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	
+	checkType(submission, ["STEP_ID"], int, 'TESLA_OUT_4.csv')
 	assert all(~submission['PREV_STEP_ID'].isnull()), "There must not be any NULL values.  NULL values must be -1."
 	prevStepIds = [str(i).split(";") for i in submission['PREV_STEP_ID']]
 	prevStepIds = reduce(operator.add, prevStepIds)
 	stepIds = submission['STEP_ID'].tolist()
 	stepIds.append(-1)
-	assert all([int(i) in stepIds for i in prevStepIds]), "PREV_STEP_IDs must be -1 or existing STEP_IDs"
-	checkType(submission, ["DESC"], str)
+	assert all([int(i) in stepIds for i in prevStepIds]), "TESLA_OUT_4.csv: PREV_STEP_IDs must be -1 or existing STEP_IDs"
+	checkType(submission, ["DESC"], str, 'TESLA_OUT_4.csv')
 
 	return(True,"Passed Validation!")
 
@@ -140,21 +146,27 @@ def validateVCF(filePath):
 	if headers is not None:
 		submission = pd.read_csv(filePath, sep="\t",comment="#",header=None,names=headers)
 	else:
-		raise ValueError("Your vcf must start with the header #CHROM")
+		raise ValueError("TESLA_VCF.vcf: This file must start with the header #CHROM")
 
 	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_VCF.vcf: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+	assert all(required_cols.isin(submission.columns)), "TESLA_VCF.vcf: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	#Require that they report variants mapped to either GRCh37 or hg19 without
 	#the chr-prefix. variants on chrM are not supported
 	chroms = range(1,23)
 	chroms = [str(i) for i in chroms]
 	chroms.extend(["X","Y","MT"])
+	strchroms = ["chr"+i for i in chroms]
+	strchroms.pop()
+	strchroms.append("chrM")
 	submission['#CHROM'] = submission['#CHROM'].astype(str)
-	assert all(submission['#CHROM'].isin(chroms)), "CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
+	if submission['#CHROM'][0].startswith("chr"):
+		assert all(submission['#CHROM'].isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(strchroms)]))
+	else:
+		assert all(submission['#CHROM'].isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
 	#No white spaces
 	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
-	assert sum(temp) == 0, "Your vcf file should not have any white spaces in any of the columns"
+	assert sum(temp) == 0, "TESLA_VCF.vcf: This file should not have any white spaces in any of the columns"
 	#I can also recommend a `bcftools query` command that will parse a VCF in a detailed way,
 	#and output with warnings or errors if the format is not adhered too
 	return(True,"Passed Validation!")
