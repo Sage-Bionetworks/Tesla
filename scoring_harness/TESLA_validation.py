@@ -29,7 +29,7 @@ def synapse_login():
 	return syn
 
 def configureHLA(i):
-	return(i.replace("*","").split("(")[0])
+	return(str(i).replace("*","").split("(")[0])
 
 def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 	for col in cols:
