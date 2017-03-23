@@ -6,9 +6,30 @@ import math
 import operator
 import string
 try:
+	import synapseclient
+except ImportError:
+	print "Please Install Synapse Client Library"
+	print ">>> pip install synapseclient"
+	sys.exit(1)
+try:
 	import pandas as pd
 except ImportError:
-	raise ImportError("Please make sure you have pandas installed: pip install pandas")
+	print "Please Pandas"
+	print ">>> pip install pandas"
+	sys.exit(1)
+
+def synapse_login():
+	try:
+		syn = synapseclient.login()
+	except Exception as e:
+		print("Please provide your synapse username/email and password (You will only be prompted once)")
+		Username = raw_input("Username: ")
+		Password = getpass.getpass()
+		syn = synapseclient.login(email=Username, password=Password,rememberMe=True)
+	return syn
+
+def configureHLA(i):
+	return(i.replace("*","").split("(")[0])
 
 def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 	for col in cols:
@@ -23,7 +44,7 @@ def checkDelimiter(submission, cols, fileName, allowed=[';']):
 	for col in cols:
 		assert all(submission[col].apply(lambda x: all([i not in x if i not in allowed else True for i in string.punctuation]))),  "%s: All values in %s column must only have punctuation: [%s].  No other punctuation allowed in the string." % (fileName, col, " or ".join(allowed))
 
-def validate_1(submission_filepath):
+def validate_1(submission_filepath, validHLA):
 	"""
 	Validates first TESLA file
 
@@ -55,7 +76,7 @@ def validate_1(submission_filepath):
 	checkDelimiter(submission, ['OA_CALLER'], "TESLA_OUT_1.csv")
 	return(True,"Passed Validation!")
 
-def validate_2(submission_filepath):
+def validate_2(submission_filepath, validHLA):
 	"""
 	Validates second TESLA file
 
@@ -82,10 +103,10 @@ def validate_2(submission_filepath):
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
-
+	assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_2.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
 	return(True,"Passed Validation!")
 
-def validate_3(submission_filepath):
+def validate_3(submission_filepath, validHLA):
 	"""
 	Validates third TESLA file
 
@@ -108,6 +129,8 @@ def validate_3(submission_filepath):
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
+	assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_3.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
+
 	return(True,"Passed Validation!")
 
 def turnInt(i):
@@ -118,7 +141,7 @@ def turnInt(i):
 	return(i)
 
 #Validate workflow
-def validate_4(submission_filepath):
+def validate_4(submission_filepath, validHLA):
 	"""
 	Validates fourth TESLA file
 
@@ -151,7 +174,7 @@ def contains_whitespace(x):
 	return(sum([" " in i for i in x if isinstance(i, str)]))
 
 # Resolve missing read counts
-def validateVCF(filePath):
+def validateVCF(filePath, validHLA):
 	"""
 	This function validates the VCF file to make sure it adhere to the genomic SOP.
 
@@ -228,7 +251,7 @@ validation_func = {"TESLA_OUT_1.csv":validate_1,
 				   "TESLA_OUT_4.csv":validate_4,
 				   "TESLA_VCF.vcf":validateVCF}
 
-def validate_files(filelist, patientId, validatingBAM=False):
+def validate_files(filelist, patientId, validHLA, validatingBAM=False):
 	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv","TESLA_VCF.vcf"]
 	if validatingBAM:
 		print("VALIDATING BAMS")
@@ -238,7 +261,7 @@ def validate_files(filelist, patientId, validatingBAM=False):
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
 	for filepath in filelist:
 		if not os.path.basename(filepath).endswith(".bam"):
-			validation_func[os.path.basename(filepath)](filepath)
+			validation_func[os.path.basename(filepath)](filepath, validHLA)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i]
 	order = pd.np.argsort(onlyTesla)
 	print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,2,3}.csv")
@@ -247,8 +270,18 @@ def validate_files(filelist, patientId, validatingBAM=False):
 	validate_STEP_ID(onlyTesla[order[2]],onlyTesla[order[3]])
 	return(True, "Passed Validation!")
 
+
 def perform_validate(args):
-	validate_files(args.file, args.patientId, validatingBAM=args.validatingBAM)
+	syn = synapse_login()
+	metadataPath = syn.get("syn8371011").path
+	metadata = pd.read_csv(metadataPath)
+	HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
+	assert args.patientId in metadata['patientId'], "Patient Id must be in the metadata"
+	listHLA = HLA['classIHLAalleles'][HLA['patientId'] == args.patientId]
+	validHLA = [i.replace("*","").split(";") for i in listHLA]
+	validHLA = reduce(operator.add, validHLA)
+	validHLA = set([i.split("(")[0] for i in validHLA])
+	validate_files(args.file, args.patientId, validHLA, validatingBAM=args.validatingBAM)
 	print("Passed Validation")
 
 if __name__ == "__main__":
@@ -256,10 +289,8 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Validate TESLA files per sample')
 	parser.add_argument("file", type=str, nargs="+",
 						help='path to TESLA files (Must have TESLA_OUT_{1..4}.csv and TESLA_VCF.vcf), bam files are optional (include --validatingBAM and --patientId parameters if you include the BAM files)')
-	parser.add_argument("--validatingBAM",action="store_true")
-	parser.add_argument("--patientId",type=str,default=None,
+	parser.add_argument("--patientId",type=int, required=True,
 						help='Patient Id')
-	if ("--validatingBAM" in sys.argv) and ("--patientId" not in sys.argv):
-	    parser.error("--patientId must be given if --validatingBAM is used")
+	parser.add_argument("--validatingBAM",action="store_true")
 	args = parser.parse_args()
 	perform_validate(args)

@@ -186,7 +186,8 @@ def validate(evaluation, canCancel, dry_run=False):
     metadataPath = syn.get("syn8371011").path
     metadata = pd.read_csv(metadataPath)
     patientIds = set(metadata.patientId)
-    
+    HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
+
     for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
 
         ## refetch the submission so that we get the file path
@@ -199,7 +200,7 @@ def validate(evaluation, canCancel, dry_run=False):
             is_valid, validation_message, addAnnots = conf.validate_teamname(syn, evaluation, submission, team_mapping)
             add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=True)
             status = update_single_submission_status(status, add_annotations)
-            is_valid, validation_message, patientAnnot = conf.validate_submission(syn, evaluation, submission, patientIds)
+            is_valid, validation_message, patientAnnot = conf.validate_submission(syn, evaluation, submission, patientIds, HLA)
             addAnnots.update(patientAnnot)
         except Exception as ex1:
             is_valid = False

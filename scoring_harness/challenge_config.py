@@ -61,7 +61,7 @@ def validate_teamname(syn, evaluation, submission, team_mapping):
     teamDict = {'team':team_mapping['alias'][teamIndex].values[0]}
     return True, "Validation passed!", teamDict
 
-def validate_submission(syn, evaluation, submission, patientIds):
+def validate_submission(syn, evaluation, submission, patientIds, HLA):
     """
     Find the right validation function and validate the submission.
 
@@ -95,7 +95,11 @@ def validate_submission(syn, evaluation, submission, patientIds):
 
         filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4,tesla_vcf]
         assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv, and TESLA_VCF.vcf must all be in the zipped file"
-        TESLA_val.validate_files(filelist,patientId,validatingBAM=False)
+        listHLA = HLA['classIHLAalleles'][HLA['patientId'] == patientId]
+        validHLA = [i.replace("*","").split(";") for i in listHLA]
+        validHLA = reduce(operator.add, validHLA)
+        validHLA = set([i.split("(")[0] for i in validHLA])
+        TESLA_val.validate_files(filelist,patientId,validHLA,validatingBAM=False)
     else:
         assert submissionName in ["%s_EXOME_N.bam" % patientId,"%s_EXOME_T.bam" % patientId,"%s_RNA_T.bam" % patientId], "Bam files must be named patientId_EXOME_N.bam, patientId_EXOME_T.bam or patientId_RNA_T.bam"
     teamDict = {'patientId':patientId}
