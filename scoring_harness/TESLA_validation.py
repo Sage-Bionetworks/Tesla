@@ -9,10 +9,12 @@ try:
 except ImportError:
 	raise ImportError("Please make sure you have pandas installed: pip install pandas")
 
-def checkType(submission, cols, colType, fileName, optional=False):
+def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 	for col in cols:
 		if optional:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "%s: All values in %s column must be type: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "%s: All values in %s column must be type or blank/na: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
+		elif vcf:
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or x == ".")), "%s: All values in %s column must be type or .: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
 		else:
 			assert all(submission[col].apply(lambda x: isinstance(x, colType))), "%s: All values in %s column must be type: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
 
@@ -96,6 +98,13 @@ def validate_3(submission_filepath):
 
 	return(True,"Passed Validation!")
 
+def turnInt(i):
+	try:
+		i = int(i)
+	except ValueError:
+		i = -2
+	return(i)
+
 #Validate workflow
 def validate_4(submission_filepath):
 	"""
@@ -115,7 +124,7 @@ def validate_4(submission_filepath):
 	prevStepIds = reduce(operator.add, prevStepIds)
 	stepIds = submission['STEP_ID'].tolist()
 	stepIds.append(-1)
-	assert all([int(i) in stepIds for i in prevStepIds]), "TESLA_OUT_4.csv: PREV_STEP_IDs must be -1 or existing STEP_IDs"
+	assert all([turnInt(i) in stepIds for i in prevStepIds]), "TESLA_OUT_4.csv: PREV_STEP_IDs must be -1 or existing STEP_IDs"
 	checkType(submission, ["DESC"], str, 'TESLA_OUT_4.csv')
 
 	return(True,"Passed Validation!")
@@ -163,9 +172,19 @@ def validateVCF(filePath):
 	strchroms.append("chrM")
 	submission['#CHROM'] = submission['#CHROM'].astype(str)
 	if submission['#CHROM'][0].startswith("chr"):
-		assert all(submission['#CHROM'].isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(strchroms)]))
+		assert all(submission['#CHROM'].isin(strchroms)), "TESLA_VCF.vcf: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(strchroms)]))
 	else:
-		assert all(submission['#CHROM'].isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
+		assert all(submission['#CHROM'].isin(chroms)), "TESLA_VCF.vcf: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
+	
+	#CHECK: integer, string columns are correct types and the missing value used must be .
+	checkType(submission, ['POS'], int, 'TESLA_VCF.vcf')
+	checkType(submission, ['QUAL'], int, 'TESLA_VCF.vcf',vcf=True)
+
+	required_string_cols = ['REF',"ALT",'FORMAT','TUMOR','NORMAL']
+	opt_string_cols = ["ID",'FILTER','INFO']
+	checkType(submission, required_string_cols, str, 'TESLA_VCF.vcf')
+	checkType(submission, opt_string_cols, str, 'TESLA_VCF.vcf',vcf=True)
+
 	#No white spaces
 	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
 	assert sum(temp) == 0, "TESLA_VCF.vcf: This file should not have any white spaces in any of the columns"
