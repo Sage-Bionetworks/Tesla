@@ -95,7 +95,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
 
         filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4,tesla_vcf]
         assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv, and TESLA_VCF.vcf must all be in the zipped file"
-        listHLA = HLA['classIHLAalleles'][HLA['patientId'] == patientId]
+        listHLA = HLA['classIHLAalleles'][HLA['patientId'] == int(patientId)]
         validHLA = [i.replace("*","").split(";") for i in listHLA]
         validHLA = reduce(operator.add, validHLA)
         validHLA = set([i.split("(")[0] for i in validHLA])
