@@ -8,6 +8,7 @@ import TESLA_validation as TESLA_val
 import zipfile
 import os
 import re
+import operator
 ## A Synapse project will hold the assetts for your challenge. Put its
 ## synapse ID here, for example
 CHALLENGE_SYN_ID = "syn7362874"
