@@ -21,7 +21,7 @@ def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 
 def checkDelimiter(submission, cols, fileName, allowed=[';']):
 	for col in cols:
-		assert all(submission[col].apply(lambda x: all([i not in x for i in string.punctuation if i not in allowed]))),  "%s: All values in %s column must only have delimiters: %s.  No other delimiters allowed in the string." % (fileName, col, ", ".join(allowed))
+		assert all(submission[col].apply(lambda x: all([i not in x if i not in allowed else True for i in string.punctuation]))),  "%s: All values in %s column must only have punctuation: [%s].  No other punctuation allowed in the string." % (fileName, col, " or ".join(allowed))
 
 def validate_1(submission_filepath):
 	"""
@@ -53,7 +53,6 @@ def validate_1(submission_filepath):
 	assert all(submission.VAR_ID == range(1, len(submission)+1)), "TESLA_OUT_1.csv: VAR_ID column must be sequencial and must start from 1 to the length of the data"
 	checkType(submission, ['OA_CALLER'], str, "TESLA_OUT_1.csv")
 	checkDelimiter(submission, ['OA_CALLER'], "TESLA_OUT_1.csv")
-
 	return(True,"Passed Validation!")
 
 def validate_2(submission_filepath):
@@ -71,7 +70,7 @@ def validate_2(submission_filepath):
 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_2.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"RANK"]
-	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','REF_EPI_SEQ']
+	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','REF_EPI_SEQ','RANK_METRICS']
 	checkType(submission, integer_cols, int, 'TESLA_OUT_2.csv')
 	#CHECK: RANK must be ordered from 1 to nrows
 	assert all(submission.RANK == range(1, len(submission)+1)), "TESLA_OUT_2.csv: RANK column must be sequencial and must start from 1 to the length of the data"
@@ -79,6 +78,10 @@ def validate_2(submission_filepath):
 	checkType(submission, string_cols, str, 'TESLA_OUT_2.csv')
 	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, 'TESLA_OUT_2.csv', optional=True)
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_2.csv', optional=True)
+	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_"])
+
+	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
+	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
 
 	return(True,"Passed Validation!")
 
@@ -103,6 +106,8 @@ def validate_3(submission_filepath):
 	checkType(submission, ['HLA_ALLELE_MUT'], str, 'TESLA_OUT_3.csv', optional=True)
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_3.csv', optional=True)
 
+	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
+	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
 	return(True,"Passed Validation!")
 
 def turnInt(i):
