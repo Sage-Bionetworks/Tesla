@@ -4,6 +4,7 @@ import argparse
 import sys
 import math
 import operator
+import string
 try:
 	import pandas as pd
 except ImportError:
@@ -17,6 +18,10 @@ def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 			assert all(submission[col].apply(lambda x: isinstance(x, colType) or x == ".")), "%s: All values in %s column must be type or .: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
 		else:
 			assert all(submission[col].apply(lambda x: isinstance(x, colType))), "%s: All values in %s column must be type: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
+
+def checkDelimiter(submission, cols, fileName, allowed=[';']):
+	for col in cols:
+		assert all(submission[col].apply(lambda x: all([i not in x for i in string.punctuation if i not in allowed]))),  "%s: All values in %s column must only have delimiters: %s.  No other delimiters allowed in the string." % (fileName, col, ", ".join(allowed))
 
 def validate_1(submission_filepath):
 	"""
@@ -40,12 +45,14 @@ def validate_1(submission_filepath):
 	strchroms.append("chrM")
 	submission.CHROM = submission.CHROM.astype(str)
 	if submission.CHROM[0].startswith("chr"):
-		assert all(submission.CHROM.isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(strchroms)]))
+		assert all(submission.CHROM.isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % "or ".join(set(submission.CHROM[~submission.CHROM.isin(strchroms)]))
 	else:
 		assert all(submission.CHROM.isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int, "TESLA_OUT_1.csv")
+	assert all(submission.VAR_ID == range(1, len(submission)+1)), "TESLA_OUT_1.csv: VAR_ID column must be sequencial and must start from 1 to the length of the data"
 	checkType(submission, ['OA_CALLER'], str, "TESLA_OUT_1.csv")
+	checkDelimiter(submission, ['OA_CALLER'], "TESLA_OUT_1.csv")
 
 	return(True,"Passed Validation!")
 
