@@ -102,7 +102,8 @@ def validate_4(submission_filepath):
 	assert all(required_cols.isin(submission.columns)), "These column headers are missing from TESLA_OUT_4.csv: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	checkType(submission, ["STEP_ID"], int)
-	prevStepIds = [i.split(";") for i in submission['PREV_STEP_ID']]
+	assert all(~submission['PREV_STEP_ID'].isnull()), "There must not be any NULL values.  NULL values must be -1."
+	prevStepIds = [str(i).split(";") for i in submission['PREV_STEP_ID']]
 	prevStepIds = reduce(operator.add, prevStepIds)
 	stepIds = submission['STEP_ID'].tolist()
 	stepIds.append(-1)
