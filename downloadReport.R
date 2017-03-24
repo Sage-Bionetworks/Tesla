@@ -34,7 +34,18 @@ downloadReport2Data$ID <- NULL
 downloadStats <- rbind(downloadReport1Data,
           downloadReport2Data)
 
-
+NOT_FOUND_FILES = c(8303327,8303410,8077800,8077817,8077818)
+# downloadStats = downloadStats[!downloadStats$ENTITY_ID %in% NOT_FOUND_FILES,]
+# downloaded = table(downloadStats$ENTITY_ID)
+# names(downloaded) = paste0("syn",names(downloaded))
+# 
+# downloadedDf = data.frame(downloaded)
+# synNames = sapply(downloadedDf$Var1, function(x) {
+#   temp = synGet(as.character(x),downloadFile=F)
+#   temp@properties$name
+# })
+# colnames(downloadedDf) <- c("synId","numberOfDownloads")
+# downloadedDf$synName = synNames
 #write.csv(total,"Tesla_download_Stats.txt") #uploaded to syn8442870
 #downloadStatsEnt <- synGet("syn8442870")
 #downloadStats <- read.csv(getFileLocation(downloadStatsEnt))
@@ -50,11 +61,9 @@ teamMembers <- sapply(teams@values$realTeam, function(teamName) {
   members[members != "3324230"]
 })
 teamMembers$TESLA_Consortium_Admins <- NULL
-#usersDownloadFile[c(15,26,37,47,70,71,73),]
-#print(synGet("syn8274434",downloadFile=F)@properties$name)
 
 usersDownloadFile <- aggregate(USER_ID ~ ENTITY_ID, downloadStats, c)
-teamDownloadStats <- apply(usersDownloadFile[!usersDownloadFile$ENTITY_ID %in% c(8303327,8303410),], 1, function(info){
+teamDownloadStats <- apply(usersDownloadFile[!usersDownloadFile$ENTITY_ID %in% NOT_FOUND_FILES,], 1, function(info){
   users = unlist(info$USER_ID)
   entId = info$ENTITY_ID
   ent = synGet(paste0("syn",entId), downloadFile=F)
@@ -79,13 +88,18 @@ write.table(teamsDownloaded, "DownloadStats.csv",sep="\t",quote = F)
 #Number of teams downloaded data
 #Which teams have downloaded the data
 #Which ones haven't
+fastqDownloads <- apply(teamsDownloaded[grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
+notFastqDownloads <- apply(teamsDownloaded[!grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
+vcfDownloads <- apply(teamsDownloaded[!grepl("*vcf.gz",row.names(teamsDownloaded)),],2, sum)
+bamDownloads <- apply(teamsDownloaded[!grepl("*bam",row.names(teamsDownloaded)),],2, sum)
+metadataDownloads <- apply(teamsDownloaded[!grepl("*csv|*txt|*xlsx",row.names(teamsDownloaded)),],2, sum)
+png("dataTypeDownloaded.png",width = 600, height=400)
+DLs = c("fastq" = sum(sumFastqDownloads>0), "vcf" = sum(vcfDownloads>0), "bam" = sum(bamDownloads>0), "metadata" = sum(metadataDownloads>0))
+barplot(DLs,main="Number of Teams Downloaded File Type", xlab = "File Type",ylab = "Number of Teams")
+dev.off()
+synStore(File("./dataTypeDownloaded.png",parentId = "syn8082860"))
 
-sumFastqDownloads <- apply(teamsDownloaded[grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
-names(sumFastqDownloads[sumFastqDownloads == 0])
-sumFastqDownloads
-sumNotFastqDownloads <- apply(teamsDownloaded[!grepl("*fastq.gz",row.names(teamsDownloaded)),],1, sum)
-sumNotFastqDownloads
-NotFastqDownloadStats <- data.frame("downloadStats" = sumNotFastqDownloads)
+NotFastqDownloadStats <- data.frame("downloadStats" = notFastqDownloads)
 write.csv(NotFastqDownloadStats, "vcfbam_downloadStats.csv",quote=F)
 
 #Of the other fileTypes, how many teams have downloaded (fileType)
