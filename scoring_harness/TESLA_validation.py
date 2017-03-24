@@ -99,7 +99,7 @@ def validate_2(submission_filepath, validHLA):
 	checkType(submission, string_cols, str, 'TESLA_OUT_2.csv')
 	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, 'TESLA_OUT_2.csv', optional=True)
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_2.csv', optional=True)
-	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_"])
+	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_","-"])
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
