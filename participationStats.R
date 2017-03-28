@@ -63,7 +63,7 @@ numTeamsOverTime = function(challenge_stats_df, challengeSynId) {
   plot(dates,numberOfTeams, xaxt="n",xlab = "Dates",ylab = "Number of Teams",main="Cumulative Number of Teams Submitted",ylim = c(0, max(numberOfTeams)),type = "l")
   axis.Date(1, at = seq(DATE_START, Sys.Date()+6, "weeks"))
   dev.off()
-  synStore(File("totalTeamsSubmitted.png",parentId = "syn8082860"))
+  synStore(File("totalTeamsSubmitted.png",parentId = challengeSynId))
 }
 
 plotStats <- function(patientId, challenge_stats_df) {
@@ -81,10 +81,10 @@ plotStats <- function(patientId, challenge_stats_df) {
     noDups = data.frame()
   } else {
     submitted = challenge_stats_df[challenge_stats_df$team %in% names(submitAll[submitAll]),]
-    submitted = submitted[,order(submitted$Date,decreasing = F)]
+    submitted = submitted[order(submitted$Date,decreasing = F),]
     noDups = submitted[!duplicated(submitted$team, fromLast = T),]
   }
-  submissionsPerWeek(noDups, patientId, "syn8082860")
+  submissionsPerWeek(noDups, patientId, "syn7801079")
 }
 
 #TESLA STATS
@@ -95,6 +95,6 @@ for (i in unique(metadataDf$patientId)) {
   plotStats(i, challenge_stats_df)
 }
 #Get cumulative teams submitted over time
-numTeamsOverTime(challenge_stats_df, "syn8082860")
+numTeamsOverTime(challenge_stats_df, "syn7801079")
 
 
