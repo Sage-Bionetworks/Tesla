@@ -151,7 +151,6 @@ def validate_4(submission_filepath, validHLA):
 	required_cols = pd.Series(["STEP_ID","PREV_STEP_ID","DESC"])
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
-	print(submission)
 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_4.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	
 	checkType(submission, ["STEP_ID"], int, 'TESLA_OUT_4.csv')
