@@ -213,7 +213,11 @@ def validateVCF(filePath, validHLA):
 	
 	#CHECK: integer, string columns are correct types and the missing value used must be .
 	checkType(submission, ['POS'], int, 'TESLA_VCF.vcf')
-	checkType(submission, ['QUAL'], int, 'TESLA_VCF.vcf',vcf=True)
+	try:
+		submission.QUAL = [float(i) if i != "." else i for i in submission.QUAL]
+	except ValueError as e:
+		raise AssertionError("TESLA_VCF.vcf: QUAL values must be numeric or .")
+	checkType(submission, ['QUAL'], float, 'TESLA_VCF.vcf',vcf=True)
 
 	required_string_cols = ['REF',"ALT",'FORMAT','TUMOR','NORMAL']
 	opt_string_cols = ["ID",'FILTER','INFO']
