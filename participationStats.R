@@ -42,6 +42,9 @@ submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId) {
       }
     }
   }
+  for (i in seq_along(numSubs)[-1]-1) {
+    numSubs[i+1] = numSubs[i] + numSubs[i+1]
+  }
   png(sprintf("%s_submissions.png", patientId),width = 600, height = 400)
   barplot(numSubs, main=sprintf("Number of Complete Submissions Per Week for patient: %s",patientId),xlab="Date", ylab="Number of Submissions", ylim=c(0,nrow(challenge_stats_df)+1))
   dev.off()
