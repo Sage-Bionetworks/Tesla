@@ -47,7 +47,7 @@ submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId) {
   }
   png(sprintf("%s_submissions.png", patientId),width = 600, height = 600)
   par(mar=c(8,4,4,2)+0.1)
-  barplot(numSubs, main=sprintf("Number of Complete Submissions for patient: %s",patientId), ylab="Number of Submissions", las=3, ylim=c(0,nrow(challenge_stats_df)+1))
+  barplot(numSubs, main=sprintf("Number of Complete Submissions for patient: %s",patientId), ylab="Number of Submissions", las=3, ylim=c(0,max(numSubs)+1))
   mtext("Date", side=1, line=6)
   dev.off()
   synStore(File(sprintf("%s_submissions.png", patientId),parentId = challengeSynId))
