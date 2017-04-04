@@ -90,7 +90,7 @@ def validate_2(submission_filepath, validHLA):
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_2.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
-	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN',"RANK"]
+	integer_cols = ['VAR_ID','PEP_LEN',"RANK"]
 	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','REF_EPI_SEQ','RANK_METRICS']
 	checkType(submission, integer_cols, int, 'TESLA_OUT_2.csv')
 	#CHECK: RANK must be ordered from 1 to nrows
@@ -100,6 +100,13 @@ def validate_2(submission_filepath, validHLA):
 	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, 'TESLA_OUT_2.csv', optional=True)
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_2.csv', optional=True)
 	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_","-"])
+
+	PROT_POS = [str(i).split(";") for i in submission['PROT_POS']]
+	PROT_POS = reduce(operator.add, PROT_POS)
+	try:
+		[int(i) for i in PROT_POS]
+	except ValueError as e:
+		return AssertionError("TESLA_OUT_4.csv: PROT_POS must be semi-colon separated and must all be integers.")
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
@@ -117,8 +124,14 @@ def validate_3(submission_filepath, validHLA):
 	submission = pd.read_csv(submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_3.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-	integer_cols = ['VAR_ID','PROT_POS','PEP_LEN']
+	integer_cols = ['VAR_ID','PEP_LEN']
 	string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ"]
+	PROT_POS = [str(i).split(";") for i in submission['PROT_POS']]
+	PROT_POS = reduce(operator.add, PROT_POS)
+	try:
+		[int(i) for i in PROT_POS]
+	except ValueError as e:
+		return AssertionError("TESLA_OUT_4.csv: PROT_POS must be semi-colon separated and must all be integers.")
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int, 'TESLA_OUT_3.csv')
