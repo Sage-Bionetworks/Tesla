@@ -231,6 +231,10 @@ def validateVCF(filePath, validHLA):
 	#and output with warnings or errors if the format is not adhered too
 	return(True,"Passed Validation!")
 
+def validateMAF(filePath, validHLA):
+	#print("VALIDATING %s" % filePath)
+	return(True, "Passed Validation!")
+
 def validate_VAR_ID(submission1_filepath, submission2_filepath, submission3_filepath):
 	submission1 = pd.read_csv(submission1_filepath)
 	submission2 = pd.read_csv(submission2_filepath)
@@ -253,16 +257,20 @@ validation_func = {"TESLA_OUT_1.csv":validate_1,
 				   "TESLA_OUT_2.csv":validate_2,
 				   "TESLA_OUT_3.csv":validate_3,
 				   "TESLA_OUT_4.csv":validate_4,
-				   "TESLA_VCF.vcf":validateVCF}
+				   "TESLA_VCF.vcf":validateVCF,
+				   "TESLA_MAF.maf":validateMAF}
 
 def validate_files(filelist, patientId, validHLA, validatingBAM=False):
-	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv","TESLA_VCF.vcf"]
+	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"]
+	vcfmaf = ["TESLA_VCF.vcf","TESLA_MAF.maf"]
 	if validatingBAM:
 		print("VALIDATING BAMS")
 		required.extend(["%s_EXOME_N.bam" % patientId ,"%s_EXOME_T.bam"% patientId,"%s_RNA_T.bam"% patientId])
 	requiredFiles = pd.Series(required)
+	vcfmafFiles = pd.Series(vcfmaf)
 	basenames = [os.path.basename(name) for name in filelist]
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
+	assert sum(vcfmafFiles.isin(basenames)) == 1, "Must have TESLA_VCF.vcf or TESLA_MAF.maf file"
 	for filepath in filelist:
 		if not os.path.basename(filepath).endswith(".bam"):
 			validation_func[os.path.basename(filepath)](filepath, validHLA)
