@@ -5,6 +5,7 @@ import sys
 import math
 import operator
 import string
+import getpass
 try:
 	import synapseclient
 except ImportError:
