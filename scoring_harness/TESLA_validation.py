@@ -24,7 +24,11 @@ def synapse_login():
 		syn = synapseclient.login()
 	except Exception as e:
 		print("Please provide your synapse username/email and password (You will only be prompted once)")
-		Username = raw_input("Username: ")
+		try: 
+			input = raw_input
+		except NameError: 
+			pass
+		Username = input("Username: ")
 		Password = getpass.getpass()
 		syn = synapseclient.login(email=Username, password=Password,rememberMe=True)
 	return syn
