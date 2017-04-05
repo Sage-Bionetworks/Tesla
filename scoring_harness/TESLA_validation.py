@@ -39,7 +39,11 @@ def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 		elif vcf:
 			assert all(submission[col].apply(lambda x: isinstance(x, colType) or x == ".")), "%s: All values in %s column must be type or .: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col].drop_duplicates().apply(str)))
 		else:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType))), "%s: No blank values allowed and all values in %s column must be type: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col].drop_duplicates().apply(str)))
+			if col == "REF_EPI_SEQ":
+				message = "%s: Please fill blank values with - that are equivalent to the length of the associated PEP_LEN.  (ie. if PEP_LEN is 5, then the REF_EPI_SEQ should be -----). All values in %s column must be type: %s [%s]"
+			else:
+				message = "%s: No blank values allowed and all values in %s column must be type: %s [%s]"
+			assert all(submission[col].apply(lambda x: isinstance(x, colType))), message % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col].drop_duplicates().apply(str)))
 
 def checkDelimiter(submission, cols, fileName, allowed=[';']):
 	for col in cols:
@@ -88,7 +92,7 @@ def validate_2(submission_filepath, validHLA):
 	print("VALIDATING %s" % submission_filepath)
 	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO"])
 
-	submission = pd.read_csv(submission_filepath)
+	submission = pd.read_csv(submission_filepath,na_values="n/a")
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_2.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
