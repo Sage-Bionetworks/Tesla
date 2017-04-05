@@ -72,7 +72,8 @@ def validate_1(submission_filepath, validHLA):
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int, "TESLA_OUT_1.csv")
 	assert all(submission.VAR_ID == range(1, len(submission)+1)), "TESLA_OUT_1.csv: VAR_ID column must be sequencial and must start from 1 to the length of the data"
-	checkType(submission, ['OA_CALLER'], str, "TESLA_OUT_1.csv")
+	checkType(submission, ['OA_CALLER'], str, "TESLA_OUT_1.csv",optional=True)
+	submission['OA_CALLER'] = submission['OA_CALLER'].fillna('')
 	checkDelimiter(submission, ['OA_CALLER'], "TESLA_OUT_1.csv")
 	return(True,"Passed Validation!")
 
