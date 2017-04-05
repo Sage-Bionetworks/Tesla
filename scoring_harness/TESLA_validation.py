@@ -107,7 +107,7 @@ def validate_2(submission_filepath, validHLA):
 	try:
 		[int(i) for i in PROT_POS]
 	except ValueError as e:
-		return AssertionError("TESLA_OUT_4.csv: PROT_POS must be semi-colon separated and must all be integers.")
+		raise AssertionError("TESLA_OUT_4.csv: PROT_POS must be semi-colon separated and must all be integers.")
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
@@ -132,7 +132,7 @@ def validate_3(submission_filepath, validHLA):
 	try:
 		[int(i) for i in PROT_POS]
 	except ValueError as e:
-		return AssertionError("TESLA_OUT_4.csv: PROT_POS must be semi-colon separated and must all be integers.")
+		raise AssertionError("TESLA_OUT_4.csv: PROT_POS must be semi-colon separated and must all be integers.")
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int, 'TESLA_OUT_3.csv')
