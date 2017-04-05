@@ -9,14 +9,14 @@ import getpass
 try:
 	import synapseclient
 except ImportError:
-	print "Please Install Synapse Client Library"
-	print ">>> pip install synapseclient"
+	print("Please Install Synapse Client Library")
+	print(">>> pip install synapseclient")
 	sys.exit(1)
 try:
 	import pandas as pd
 except ImportError:
-	print "Please Pandas"
-	print ">>> pip install pandas"
+	print("Please Pandas")
+	print(">>> pip install pandas")
 	sys.exit(1)
 
 def synapse_login():
