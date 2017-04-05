@@ -34,11 +34,11 @@ def configureHLA(i):
 def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 	for col in cols:
 		if optional:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "%s: All values in %s column must be type or blank/na: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "%s: All values in %s column must be type or blank/na: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col].apply(str)))
 		elif vcf:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType) or x == ".")), "%s: All values in %s column must be type or .: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or x == ".")), "%s: All values in %s column must be type or .: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col].apply(str)))
 		else:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType))), "%s: All values in %s column must be type: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col]))
+			assert all(submission[col].apply(lambda x: isinstance(x, colType))), "%s: No blank values allowed and all values in %s column must be type: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col].apply(str)))
 
 def checkDelimiter(submission, cols, fileName, allowed=[';']):
 	for col in cols:
