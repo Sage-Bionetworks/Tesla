@@ -98,6 +98,7 @@ def validate_2(submission_filepath, validHLA):
 	assert all(submission.RANK == range(1, len(submission)+1)), "TESLA_OUT_2.csv: RANK column must be sequencial and must start from 1 to the length of the data"
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, string_cols, str, 'TESLA_OUT_2.csv')
+	submission['RANK_DESC'] = submission['RANK_DESC'].fillna('').apply(str)
 	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, 'TESLA_OUT_2.csv', optional=True)
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_2.csv', optional=True)
 	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_","-"])
