@@ -52,6 +52,17 @@ def checkDelimiter(submission, cols, fileName, allowed=[';']):
 	for col in cols:
 		assert all(submission[col].apply(lambda x: all([i not in x if i not in allowed else True for i in string.punctuation]))),  "%s: All values in %s column must only have punctuation: [%s].  No other punctuation allowed in the string." % (fileName, col, " or ".join(allowed))
 
+def intSemiColonListCheck(submission, fileName, col):
+	allResults = []
+	results = [str(i).split(";") for i in submission[col]]
+	for i in results:
+		allResults.extend(i)
+	try:
+		[int(i) for i in allResults]
+	except ValueError as e:
+		raise AssertionError("%s: %s must be semi-colon separated and must all be integers." %(fileName, col))
+	return(pd.Series(allResults).astype(int))
+
 def validate_1(submission_filepath, validHLA):
 	"""
 	Validates first TESLA file
@@ -99,7 +110,7 @@ def validate_2(submission_filepath, validHLA):
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_2.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
-	integer_cols = ['VAR_ID','PEP_LEN',"RANK"]
+	integer_cols = ['PEP_LEN',"RANK"]
 	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','REF_EPI_SEQ','RANK_METRICS']
 	checkType(submission, integer_cols, int, 'TESLA_OUT_2.csv')
 	#CHECK: RANK must be ordered from 1 to nrows
@@ -110,21 +121,14 @@ def validate_2(submission_filepath, validHLA):
 	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, 'TESLA_OUT_2.csv', optional=True)
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_2.csv', optional=True)
 	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_","-"])
-
-	final_PROT_POS = []
-	PROT_POS = [str(i).split(";") for i in submission['PROT_POS']]
-	for i in PROT_POS:
-		final_PROT_POS.extend(i)
-	#PROT_POS = reduce(operator.add, PROT_POS)
-	try:
-		[int(i) for i in final_PROT_POS]
-	except ValueError as e:
-		raise AssertionError("TESLA_OUT_2.csv: PROT_POS must be semi-colon separated and must all be integers.")
+	intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'PROT_POS')
+	intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'VAR_ID')
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_2.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
 	return(True,"Passed Validation!")
+
 
 def validate_3(submission_filepath, validHLA):
 	"""
@@ -135,30 +139,24 @@ def validate_3(submission_filepath, validHLA):
 	print("VALIDATING %s" % submission_filepath)
 	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
-	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_3.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-	integer_cols = ['VAR_ID','PEP_LEN']
-	string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ"]
-	PROT_POS = [str(i).split(";") for i in submission['PROT_POS']]
-	final_PROT_POS = []
-	PROT_POS = [str(i).split(";") for i in submission['PROT_POS']]
-	for i in PROT_POS:
-		final_PROT_POS.extend(i)
-	try:
-		[int(i) for i in final_PROT_POS]
-	except ValueError as e:
-		raise AssertionError("TESLA_OUT_3.csv: PROT_POS must be semi-colon separated and must all be integers.")
+	if not submission.empty:
+		#CHECK: Required headers must exist in submission
+		assert all(required_cols.isin(submission.columns)), "TESLA_OUT_3.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+		integer_cols = ['PEP_LEN']
+		string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ"]
+		intSemiColonListCheck(submission, "TESLA_OUT_3.csv", 'PROT_POS')
+		intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'VAR_ID')
 
-	#CHECK: integer, string and float columns are correct types
-	checkType(submission, integer_cols, int, 'TESLA_OUT_3.csv')
-	checkType(submission, string_cols, str, 'TESLA_OUT_3.csv')
-	checkType(submission, ['STEP_ID'], int, 'TESLA_OUT_3.csv', optional=True)
-	checkType(submission, ['HLA_ALLELE_MUT'], str, 'TESLA_OUT_3.csv', optional=True)
-	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_3.csv', optional=True)
+		#CHECK: integer, string and float columns are correct types
+		checkType(submission, integer_cols, int, 'TESLA_OUT_3.csv')
+		checkType(submission, string_cols, str, 'TESLA_OUT_3.csv')
+		checkType(submission, ['STEP_ID'], int, 'TESLA_OUT_3.csv', optional=True)
+		checkType(submission, ['HLA_ALLELE_MUT'], str, 'TESLA_OUT_3.csv', optional=True)
+		checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_3.csv', optional=True)
 
-	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
-	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
-	assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_3.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
+		assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
+		assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
+		assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_3.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
 
 	return(True,"Passed Validation!")
 
@@ -270,9 +268,10 @@ def validate_VAR_ID(submission1_filepath, submission2_filepath, submission3_file
 	submission1 = pd.read_csv(submission1_filepath)
 	submission2 = pd.read_csv(submission2_filepath)
 	submission3 = pd.read_csv(submission3_filepath)
-
-	assert all(submission2['VAR_ID'].isin(submission1['VAR_ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
-	assert all(submission3['VAR_ID'].isin(submission1['VAR_ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
+	sub2 = intSemiColonListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID')
+	sub3 = intSemiColonListCheck(submission3, "TESLA_OUT_3.csv", 'VAR_ID')
+	assert all(sub2.isin(submission1['VAR_ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
+	assert all(sub3.isin(submission1['VAR_ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
 
 	return(True, "Passed Validation!")
 
