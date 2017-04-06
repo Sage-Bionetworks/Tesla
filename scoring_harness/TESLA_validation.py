@@ -38,9 +38,9 @@ def configureHLA(i):
 def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 	for col in cols:
 		if optional:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "%s: All values in %s column must be type or blank/na: %s" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)))
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "%s: All values in %s column must be type: %s or blank/na" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)))
 		elif vcf:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType) or x == ".")), "%s: All values in %s column must be type or .: %s" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)))
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or x == ".")), "%s: All values in %s column must be type: %s or ." % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)))
 		else:
 			if col == "REF_EPI_SEQ":
 				message = "%s: Please fill blank values with - that are equivalent to the length of the associated PEP_LEN.  (ie. if PEP_LEN is 5, then the REF_EPI_SEQ should be -----). All values in %s column must be type: %s"
@@ -119,7 +119,7 @@ def validate_2(submission_filepath, validHLA):
 	try:
 		[int(i) for i in final_PROT_POS]
 	except ValueError as e:
-		raise AssertionError("TESLA_OUT_4.csv: PROT_POS must be semi-colon separated and must all be integers.")
+		raise AssertionError("TESLA_OUT_2.csv: PROT_POS must be semi-colon separated and must all be integers.")
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
@@ -147,7 +147,7 @@ def validate_3(submission_filepath, validHLA):
 	try:
 		[int(i) for i in final_PROT_POS]
 	except ValueError as e:
-		raise AssertionError("TESLA_OUT_4.csv: PROT_POS must be semi-colon separated and must all be integers.")
+		raise AssertionError("TESLA_OUT_3.csv: PROT_POS must be semi-colon separated and must all be integers.")
 
 	#CHECK: integer, string and float columns are correct types
 	checkType(submission, integer_cols, int, 'TESLA_OUT_3.csv')

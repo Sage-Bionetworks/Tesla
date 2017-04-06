@@ -58,7 +58,7 @@ def validate_teamname(syn, evaluation, submission, team_mapping):
     assert 'teamId' in submission, "Must submit as part of a team and not as an individual"
     team = syn.getTeam(submission.teamId)
     teamIndex = team_mapping['realTeam'] == team['name']
-    assert sum(teamIndex) == 1, "Must submit as one of these teams: %s" % ", ".join(team_mapping['realTeam'])
+    assert sum(teamIndex) == 1, "Must submit as: %s" % ",".join(team_mapping['realTeam'])
     teamDict = {'team':team_mapping['alias'][teamIndex].values[0]}
     return True, "Validation passed!", teamDict
 
