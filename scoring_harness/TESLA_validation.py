@@ -139,9 +139,9 @@ def validate_3(submission_filepath, validHLA):
 	print("VALIDATING %s" % submission_filepath)
 	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","STEP_ID"])
 	submission = pd.read_csv(submission_filepath)
+	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_3.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	if not submission.empty:
 		#CHECK: Required headers must exist in submission
-		assert all(required_cols.isin(submission.columns)), "TESLA_OUT_3.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 		integer_cols = ['PEP_LEN']
 		string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ"]
 		intSemiColonListCheck(submission, "TESLA_OUT_3.csv", 'PROT_POS')
