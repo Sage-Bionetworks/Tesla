@@ -38,15 +38,15 @@ def configureHLA(i):
 def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 	for col in cols:
 		if optional:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "%s: All values in %s column must be type or blank/na: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col].drop_duplicates().apply(str)))
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or math.isnan(x))), "%s: All values in %s column must be type or blank/na: %s" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)))
 		elif vcf:
-			assert all(submission[col].apply(lambda x: isinstance(x, colType) or x == ".")), "%s: All values in %s column must be type or .: %s [%s]" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col].drop_duplicates().apply(str)))
+			assert all(submission[col].apply(lambda x: isinstance(x, colType) or x == ".")), "%s: All values in %s column must be type or .: %s" % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)))
 		else:
 			if col == "REF_EPI_SEQ":
-				message = "%s: Please fill blank values with - that are equivalent to the length of the associated PEP_LEN.  (ie. if PEP_LEN is 5, then the REF_EPI_SEQ should be -----). All values in %s column must be type: %s [%s]"
+				message = "%s: Please fill blank values with - that are equivalent to the length of the associated PEP_LEN.  (ie. if PEP_LEN is 5, then the REF_EPI_SEQ should be -----). All values in %s column must be type: %s"
 			else:
-				message = "%s: No blank values allowed and all values in %s column must be type: %s [%s]"
-			assert all(submission[col].apply(lambda x: isinstance(x, colType))), message % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)), ", ".join(submission[col].drop_duplicates().apply(str)))
+				message = "%s: No blank values allowed and all values in %s column must be type: %s"
+			assert all(submission[col].apply(lambda x: isinstance(x, colType))), message % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)))
 
 def checkDelimiter(submission, cols, fileName, allowed=[';']):
 	for col in cols:
