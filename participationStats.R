@@ -31,7 +31,7 @@ getSubmissionCount = function(evalId, status) {
 }
 
 submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId) {
-  weeks = seq(DATE_START, Sys.Date()+6, "weeks")
+  weeks = seq(DATE_START, Sys.Date(), "weeks")
   numSubs = sapply(weeks, function(x) x= 0)
   names(numSubs) <- weeks
   for (i in as.character(weeks)) {
