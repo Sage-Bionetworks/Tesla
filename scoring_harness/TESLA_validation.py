@@ -3,7 +3,6 @@ import re
 import argparse
 import sys
 import math
-import operator
 import string
 import getpass
 try:
@@ -112,10 +111,13 @@ def validate_2(submission_filepath, validHLA):
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_2.csv', optional=True)
 	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_","-"])
 
+	final_PROT_POS = []
 	PROT_POS = [str(i).split(";") for i in submission['PROT_POS']]
-	PROT_POS = reduce(operator.add, PROT_POS)
+	for i in PROT_POS:
+		final_PROT_POS.extend(i)
+	#PROT_POS = reduce(operator.add, PROT_POS)
 	try:
-		[int(i) for i in PROT_POS]
+		[int(i) for i in final_PROT_POS]
 	except ValueError as e:
 		raise AssertionError("TESLA_OUT_4.csv: PROT_POS must be semi-colon separated and must all be integers.")
 
@@ -138,9 +140,12 @@ def validate_3(submission_filepath, validHLA):
 	integer_cols = ['VAR_ID','PEP_LEN']
 	string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ"]
 	PROT_POS = [str(i).split(";") for i in submission['PROT_POS']]
-	PROT_POS = reduce(operator.add, PROT_POS)
+	final_PROT_POS = []
+	PROT_POS = [str(i).split(";") for i in submission['PROT_POS']]
+	for i in PROT_POS:
+		final_PROT_POS.extend(i)
 	try:
-		[int(i) for i in PROT_POS]
+		[int(i) for i in final_PROT_POS]
 	except ValueError as e:
 		raise AssertionError("TESLA_OUT_4.csv: PROT_POS must be semi-colon separated and must all be integers.")
 
@@ -180,10 +185,12 @@ def validate_4(submission_filepath, validHLA):
 	checkType(submission, ["STEP_ID"], int, 'TESLA_OUT_4.csv')
 	assert all(~submission['PREV_STEP_ID'].isnull()), "TESLA_OUT_4.csv: There must not be any NULL values in PREV_STEP_ID.  NULL values must be -1."
 	prevStepIds = [str(i).split(";") for i in submission['PREV_STEP_ID']]
-	prevStepIds = reduce(operator.add, prevStepIds)
+	final_prevStepIds = []
+	for i in prevStepIds:
+		final_prevStepIds.extend(i)
 	stepIds = submission['STEP_ID'].tolist()
 	stepIds.append(-1)
-	assert all([turnInt(i) in stepIds for i in prevStepIds]), "TESLA_OUT_4.csv: PREV_STEP_IDs must be -1 or existing STEP_IDs"
+	assert all([turnInt(i) in stepIds for i in final_prevStepIds]), "TESLA_OUT_4.csv: PREV_STEP_IDs must be -1 or existing STEP_IDs"
 	checkType(submission, ["DESC"], str, 'TESLA_OUT_4.csv')
 
 	return(True,"Passed Validation!")
@@ -315,9 +322,11 @@ def perform_validate(args):
 	assert args.patientId in metadata['patientId'], "Patient Id must be in the metadata"
 	listHLA = HLA['classIHLAalleles'][HLA['patientId'] == args.patientId]
 	validHLA = [i.replace("*","").split(";") for i in listHLA]
-	validHLA = reduce(operator.add, validHLA)
-	validHLA = set([i.split("(")[0] for i in validHLA])
-	validate_files(args.file, args.patientId, validHLA, validatingBAM=args.validatingBAM)
+	final_validHLA = []
+	for i in validHLA:
+		final_validHLA.extend(i)
+	final_validHLA = set([i.split("(")[0] for i in final_validHLA])
+	validate_files(args.file, args.patientId, final_validHLA, validatingBAM=args.validatingBAM)
 	print("Passed Validation")
 
 if __name__ == "__main__":
