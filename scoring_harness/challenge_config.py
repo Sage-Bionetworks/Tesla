@@ -83,7 +83,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
         try:
             zfile = zipfile.ZipFile(submission.filePath)
         except zipfile.BadZipfile as e:
-            raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, and TESLA_OUT_4.csv")
+            raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv and (TESLA_VCF.vcf or TESLA_MAF.maf)")
 
         for name in zfile.namelist():
           zfile.extract(name, dirname)
@@ -96,7 +96,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
         tesla_maf = os.path.join(dirname,'TESLA_MAF.maf')
         other_file = tesla_maf if os.path.exists(tesla_maf) else tesla_vcf
         filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4,other_file]
-        assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv, and (TESLA_VCF.vcf or TESLA_MAF.maf) must all be in the zipped file"
+        assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv, and (TESLA_VCF.vcf or TESLA_MAF.maf) must all be in the zipped file.  Please do NOT put your files in a folder prior to zipping them."
         listHLA = HLA['classIHLAalleles'][HLA['patientId'] == int(patientId)]
         validHLA = [i.replace("*","").split(";") for i in listHLA]
         validHLA = reduce(operator.add, validHLA)
