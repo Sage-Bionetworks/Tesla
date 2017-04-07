@@ -60,7 +60,7 @@ def intSemiColonListCheck(submission, fileName, col):
 	try:
 		[int(i) for i in allResults]
 	except ValueError as e:
-		raise AssertionError("%s: %s must be semi-colon separated and must all be integers." %(fileName, col))
+		raise AssertionError("%s: %s can be semi-colon separated but all values must be integers." %(fileName, col))
 	return(pd.Series(allResults).astype(int))
 
 def validate_1(submission_filepath, validHLA):
