@@ -126,7 +126,7 @@ def validate_2(submission_filepath, validHLA):
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
-	assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_2.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
+	#assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_2.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
 	return(True,"Passed Validation!")
 
 
@@ -156,7 +156,7 @@ def validate_3(submission_filepath, validHLA):
 
 		assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 		assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
-		assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_3.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
+		#assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_3.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
 
 	return(True,"Passed Validation!")
 

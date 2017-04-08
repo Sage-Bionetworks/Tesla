@@ -22,21 +22,20 @@ zippedSubmissions = dict()
 for i, stat in temp:
 	getTeam = filter(lambda x: x.get("key")=="team", stat.annotations['stringAnnos'])[0]['value']
 	entity = syn.getSubmission(i,downloadFile=False).entity
-	if entity.name.endswith(".zip"):
-		if zippedSubmissions.get(getTeam) is None:
-			zippedSubmissions[getTeam] = [entity.name]
-		else:
-			zippedSubmissions[getTeam].append(entity.name)
-
+	#if entity.name.endswith(".zip"):
+	if zippedSubmissions.get(getTeam) is None:
+		zippedSubmissions[getTeam] = [entity.name]
+	else:
+		zippedSubmissions[getTeam].append(entity.name)
 
 for key in zippedSubmissions:
 	zippedSubmissions[key] = set(zippedSubmissions[key])
 
-patients = dict()
+# patients = dict()
 
-for key in zippedSubmissions:
-	for i in zippedSubmissions[key]:
-		if patients.get(i) is None:
-			patients[i] = 1
-		else:
-			patients[i] = patients[i]+1
+# for key in zippedSubmissions:
+# 	for i in zippedSubmissions[key]:
+# 		if patients.get(i) is None:
+# 			patients[i] = 1
+# 		else:
+# 			patients[i] = patients[i]+1
