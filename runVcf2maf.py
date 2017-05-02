@@ -1,11 +1,9 @@
 
 import os
 import pandas as pd
-# def vcftomaf(vcffiles, path_to_GENIE, center,
-# 			 vcf2mafPath = "/home/tyu/software/vcf2maf",
-# 			 veppath="/home/tyu/software/vep", 
-# 			 vepdata="/home/tyu/.vep", 
-# 			 reference="/home/tyu/reference/hg19/hg_19_all_chrs.fasta"):
+import synapseclient
+syn = synapseclient.login()
+
 vcf2mafPath = "/home/ubuntu/vcf2maf-1.6.12"
 veppath = "/home/ubuntu/vep"
 vepdata = "/home/ubuntu/.vep"
@@ -13,8 +11,7 @@ reference = "/home/ubuntu/.vep/homo_sapiens/86_GRCh38/Homo_sapiens.GRCh38.dna.pr
 tesla_path = "/home/ubuntu/tesla/TESLA_VCF"
 modifiedVCFPath = "/home/ubuntu/tesla"
 ncbibuild = "GRCh38"
-#centerInputFolder = os.path.join(path_to_GENIE,center,"input")
-#centerStagingFolder = os.path.join(path_to_GENIE,center,"staging")
+
 mafFiles = []
 files = os.walk(tesla_path)
 vcffiles = []
@@ -30,14 +27,6 @@ for path in vcffiles:
 	os.system("sed 's/^chr//' %s > %s" % (path, newVCFPath))
 	os.system("sed -i 's/\t\t/\t.\t/g' %s" % newVCFPath)
 	os.system("sed -i 's/ p\./,p./' %s" % newVCFPath)
-	# vcfCols = ["#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT"]
-	# with open(newVCFPath,"r") as f:
-	# 	for line in f:
-	# 		if line.startswith("#CHROM"):
-	# 			cols = line
-	# cols = cols.replace("\n","")
-	# cols = cols.replace("\r","")
-	# cols = cols.split("\t")
 
 	if os.path.isfile(newVCFPath+".maf"):
 		mafFiles.append(newVCFPath+".maf")
@@ -58,12 +47,8 @@ for path in vcffiles:
 
 maf = pd.DataFrame()
 for i in mafFiles:
-	# mafName = os.path.basename(i)
-	# metadata = mafName.split("_")
-	# team = metadata[0]
 	temp = pd.read_csv(i,sep="\t",comment="#")
 	if len(temp)>0:
-		#temp['Center'] = team
 		maf = maf.append(temp)
 maf.to_csv("TESLA_uncleaned_vcf.maf",sep="\t",index=False)
 syn.store(synapseclient.File("TESLA_uncleaned_vcf.maf",parentId = "syn8123644"))
