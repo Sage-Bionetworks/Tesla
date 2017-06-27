@@ -1,6 +1,8 @@
 import os
 import re
 import argparse
+import subprocess
+from subprocess import Popen, PIPE, STDOUT
 import sys
 import math
 import string
@@ -63,7 +65,7 @@ def intSemiColonListCheck(submission, fileName, col):
 		raise AssertionError("%s: %s can be semi-colon separated but all values must be integers." %(fileName, col))
 	return(pd.Series(allResults).astype(int))
 
-def validate_1(submission_filepath, validHLA):
+def validate_1(submission_filepath):
 	"""
 	Validates first TESLA file
 
@@ -126,7 +128,7 @@ def validate_2(submission_filepath, validHLA):
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
-	#assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_2.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
+	assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_2.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
 	return(True,"Passed Validation!")
 
 
@@ -156,7 +158,7 @@ def validate_3(submission_filepath, validHLA):
 
 		assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 		assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
-		#assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_3.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
+		assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_3.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
 
 	return(True,"Passed Validation!")
 
@@ -168,7 +170,7 @@ def turnInt(i):
 	return(i)
 
 #Validate workflow
-def validate_4(submission_filepath, validHLA):
+def validate_4(submission_filepath):
 	"""
 	Validates fourth TESLA file
 
@@ -203,7 +205,7 @@ def contains_whitespace(x):
 	return(sum([" " in i for i in x if isinstance(i, str)]))
 
 # Resolve missing read counts
-def validateVCF(filePath, validHLA):
+def validateVCF(filePath, vcfValidator):
 	"""
 	This function validates the VCF file to make sure it adhere to the genomic SOP.
 
@@ -258,9 +260,16 @@ def validateVCF(filePath, validHLA):
 	assert sum(temp) == 0, "TESLA_VCF.vcf: This file should not have any white spaces in any of the columns"
 	#I can also recommend a `bcftools query` command that will parse a VCF in a detailed way,
 	#and output with warnings or errors if the format is not adhered too
+
+	cmd = ['./%s' % vcfValidator, "-i", filePath]
+	p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+	output = p.stdout.read()
+	result = '\nAccording to the VCF specification, the input file is valid\n' in output
+	assert result, output
+
 	return(True,"Passed Validation!")
 
-def validateMAF(filePath, validHLA):
+def validateMAF(filePath):
 	#print("VALIDATING %s" % filePath)
 	return(True, "Passed Validation!")
 
@@ -291,7 +300,7 @@ validation_func = {"TESLA_OUT_1.csv":validate_1,
 				   "TESLA_VCF.vcf":validateVCF,
 				   "TESLA_MAF.maf":validateMAF}
 
-def validate_files(filelist, patientId, validHLA, validatingBAM=False):
+def validate_files(filelist, patientId, validHLA, vcfValidator, validatingBAM=False):
 	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"]
 	vcfmaf = ["TESLA_VCF.vcf","TESLA_MAF.maf"]
 	if validatingBAM:
@@ -303,8 +312,12 @@ def validate_files(filelist, patientId, validHLA, validatingBAM=False):
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
 	assert sum(vcfmafFiles.isin(basenames)) == 1, "Must have TESLA_VCF.vcf or TESLA_MAF.maf file"
 	for filepath in filelist:
-		if not os.path.basename(filepath).endswith(".bam"):
+		if os.path.basename(filepath) in ['TESLA_OUT_2.csv', 'TESLA_OUT_3.csv']:
 			validation_func[os.path.basename(filepath)](filepath, validHLA)
+		elif os.path.basename(filepath) == "TESLA_VCF.vcf":
+			validation_func[os.path.basename(filepath)](filepath, vcfValidator)
+		elif not os.path.basename(filepath).endswith(".bam"):
+			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i]
 	order = pd.np.argsort(onlyTesla)
 	print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,2,3}.csv")
@@ -326,7 +339,7 @@ def perform_validate(args):
 	for i in validHLA:
 		final_validHLA.extend(i)
 	final_validHLA = set([i.split("(")[0] for i in final_validHLA])
-	validate_files(args.file, args.patientId, final_validHLA, validatingBAM=args.validatingBAM)
+	validate_files(args.file, args.patientId, final_validHLA, args.vcfValidator, validatingBAM=args.validatingBAM)
 	print("Passed Validation")
 
 if __name__ == "__main__":
@@ -336,6 +349,8 @@ if __name__ == "__main__":
 						help='path to TESLA files (Must have TESLA_OUT_{1..4}.csv and TESLA_VCF.vcf), bam files are optional (include --validatingBAM and --patientId parameters if you include the BAM files)')
 	parser.add_argument("--patientId",type=int, required=True,
 						help='Patient Id')
+	parser.add_argument("--vcfValidator",type=str, required=True,
+						help='Path to vcf validator executable')
 	parser.add_argument("--validatingBAM",action="store_true")
 	args = parser.parse_args()
 	perform_validate(args)
