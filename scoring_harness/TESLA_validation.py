@@ -106,7 +106,7 @@ def validate_2(submission_filepath, validHLA):
 	"""
 	#VAR_ID have to check out with first file
 	print("VALIDATING %s" % submission_filepath)
-	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO"])
+	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO","SCORE"])
 
 	submission = pd.read_csv(submission_filepath,na_values="n/a")
 	#CHECK: Required headers must exist in submission
@@ -121,7 +121,7 @@ def validate_2(submission_filepath, validHLA):
 	checkType(submission, string_cols, str, 'TESLA_OUT_2.csv')
 	submission['RANK_DESC'] = submission['RANK_DESC'].fillna('').apply(str)
 	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, 'TESLA_OUT_2.csv', optional=True)
-	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_2.csv', optional=True)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING','SCORE'], float, 'TESLA_OUT_2.csv', optional=True)
 	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_","-"])
 	intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'PROT_POS')
 	intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'VAR_ID')
@@ -350,7 +350,7 @@ if __name__ == "__main__":
 	parser.add_argument("--patientId",type=int, required=True,
 						help='Patient Id')
 	parser.add_argument("--vcfValidator",type=str, required=True,
-						help='Path to vcf validator executable')
+						help='Path to vcf validator executable. Download this link: ')
 	parser.add_argument("--validatingBAM",action="store_true")
 	args = parser.parse_args()
 	perform_validate(args)
