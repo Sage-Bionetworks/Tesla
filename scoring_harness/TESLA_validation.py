@@ -65,38 +65,38 @@ def intSemiColonListCheck(submission, fileName, col):
 		raise AssertionError("%s: %s can be semi-colon separated but all values must be integers." %(fileName, col))
 	return(pd.Series(allResults).astype(int))
 
-def validate_1(submission_filepath):
-	"""
-	Validates first TESLA file
+# def validate_1(submission_filepath):
+# 	"""
+# 	Validates first TESLA file
 
-	:param submission_filepath: Path of submission file TESLA_OUT_1.csv
-	"""
-	print("VALIDATING %s" % submission_filepath)
-	required_cols = pd.Series(["VAR_ID","CHROM","POS","OA_CALLER"])
-	integer_cols = ['VAR_ID','POS']
-	#NO duplicated VAR_ID
-	submission = pd.read_csv(submission_filepath)
-	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_1.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-	#CHECK: CHROM must be 1-22 or X
-	chroms = range(1,23)
-	chroms = [str(i) for i in chroms]
-	chroms.extend(["X","Y","MT"])
-	strchroms = ["chr"+i for i in chroms]
-	strchroms.pop()
-	strchroms.append("chrM")
-	submission.CHROM = submission.CHROM.astype(str)
-	if submission.CHROM[0].startswith("chr"):
-		assert all(submission.CHROM.isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % "or ".join(set(submission.CHROM[~submission.CHROM.isin(strchroms)]))
-	else:
-		assert all(submission.CHROM.isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
-	#CHECK: integer, string and float columns are correct types
-	checkType(submission, integer_cols, int, "TESLA_OUT_1.csv")
-	assert all(submission.VAR_ID == range(1, len(submission)+1)), "TESLA_OUT_1.csv: VAR_ID column must be sequencial and must start from 1 to the length of the data"
-	checkType(submission, ['OA_CALLER'], str, "TESLA_OUT_1.csv",optional=True)
-	submission['OA_CALLER'] = submission['OA_CALLER'].fillna('')
-	checkDelimiter(submission, ['OA_CALLER'], "TESLA_OUT_1.csv")
-	return(True,"Passed Validation!")
+# 	:param submission_filepath: Path of submission file TESLA_OUT_1.csv
+# 	"""
+# 	print("VALIDATING %s" % submission_filepath)
+# 	required_cols = pd.Series(["VAR_ID","CHROM","POS","OA_CALLER"])
+# 	integer_cols = ['VAR_ID','POS']
+# 	#NO duplicated VAR_ID
+# 	submission = pd.read_csv(submission_filepath)
+# 	#CHECK: Required headers must exist in submission
+# 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_1.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
+# 	#CHECK: CHROM must be 1-22 or X
+# 	chroms = range(1,23)
+# 	chroms = [str(i) for i in chroms]
+# 	chroms.extend(["X","Y","MT"])
+# 	strchroms = ["chr"+i for i in chroms]
+# 	strchroms.pop()
+# 	strchroms.append("chrM")
+# 	submission.CHROM = submission.CHROM.astype(str)
+# 	if submission.CHROM[0].startswith("chr"):
+# 		assert all(submission.CHROM.isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % "or ".join(set(submission.CHROM[~submission.CHROM.isin(strchroms)]))
+# 	else:
+# 		assert all(submission.CHROM.isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
+# 	#CHECK: integer, string and float columns are correct types
+# 	checkType(submission, integer_cols, int, "TESLA_OUT_1.csv")
+# 	assert all(submission.VAR_ID == range(1, len(submission)+1)), "TESLA_OUT_1.csv: VAR_ID column must be sequencial and must start from 1 to the length of the data"
+# 	checkType(submission, ['OA_CALLER'], str, "TESLA_OUT_1.csv",optional=True)
+# 	submission['OA_CALLER'] = submission['OA_CALLER'].fillna('')
+# 	checkDelimiter(submission, ['OA_CALLER'], "TESLA_OUT_1.csv")
+# 	return(True,"Passed Validation!")
 
 def validate_2(submission_filepath, validHLA):
 	"""
@@ -205,7 +205,7 @@ def contains_whitespace(x):
 	return(sum([" " in i for i in x if isinstance(i, str)]))
 
 # Resolve missing read counts
-def validateVCF(filePath, vcfValidator):
+def validateVCF(filePath):
 	"""
 	This function validates the VCF file to make sure it adhere to the genomic SOP.
 
@@ -250,37 +250,44 @@ def validateVCF(filePath, vcfValidator):
 		raise AssertionError("TESLA_VCF.vcf: QUAL values must be numeric or .")
 	checkType(submission, ['QUAL'], float, 'TESLA_VCF.vcf',vcf=True)
 
-	required_string_cols = ['REF',"ALT",'FORMAT','TUMOR','NORMAL']
-	opt_string_cols = ["ID",'FILTER','INFO']
+	required_string_cols = ['REF',"ALT",'FORMAT','TUMOR','NORMAL','ID']
+	opt_string_cols = ['FILTER','INFO']
 	checkType(submission, required_string_cols, str, 'TESLA_VCF.vcf')
 	checkType(submission, opt_string_cols, str, 'TESLA_VCF.vcf',vcf=True)
-
+	assert sum(submission.ID.duplicated()) == 0, "TESLA_VCF.vcf: The ID column must not have any duplicates"
 	#No white spaces
 	temp = submission.apply(lambda x: contains_whitespace(x), axis=1)
 	assert sum(temp) == 0, "TESLA_VCF.vcf: This file should not have any white spaces in any of the columns"
 	#I can also recommend a `bcftools query` command that will parse a VCF in a detailed way,
 	#and output with warnings or errors if the format is not adhered too
-
-	cmd = ['./%s' % vcfValidator, "-i", filePath]
-	p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+	try:
+		cmd = ['docker','run','-v','%s:/TESLA_VCF.vcf' % filepath, "thomasvyu/vcf-validator"]
+		#cmd = ['./%s' % vcfValidator, "-i", filePath]
+		p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+	except OSError as e:
+		raise ValueError('Please make sure docker is installed.')
 	output = p.stdout.read()
 	result = '\nAccording to the VCF specification, the input file is valid\n' in output
 	assert result, output
-
 	return(True,"Passed Validation!")
 
 def validateMAF(filePath):
 	#print("VALIDATING %s" % filePath)
 	return(True, "Passed Validation!")
 
-def validate_VAR_ID(submission1_filepath, submission2_filepath, submission3_filepath):
-	submission1 = pd.read_csv(submission1_filepath)
+def validate_VAR_ID(submission2_filepath, submission3_filepath, submissionvcf_filepath):
 	submission2 = pd.read_csv(submission2_filepath)
 	submission3 = pd.read_csv(submission3_filepath)
+	with open(submissionvcf_filepath,"r") as foo:
+		for i in foo:
+			if i.startswith("#CHROM"):
+				headers = i.replace("\n","").split("\t")
+	submissionvcf = pd.read_csv(filePath, sep="\t",comment="#",header=None,names=headers)
+
 	sub2 = intSemiColonListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID')
 	sub3 = intSemiColonListCheck(submission3, "TESLA_OUT_3.csv", 'VAR_ID')
-	assert all(sub2.isin(submission1['VAR_ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
-	assert all(sub3.isin(submission1['VAR_ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_OUT_1.csv's VAR_IDs"
+	assert all(sub2.isin(submissionvcf['ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
+	assert all(sub3.isin(submissionvcf['ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
 
 	return(True, "Passed Validation!")
 
@@ -293,15 +300,14 @@ def validate_STEP_ID(submission3_filepath, submission4_filepath):
 
 	return(True, "Passed Validation!")
 
-validation_func = {"TESLA_OUT_1.csv":validate_1,
-				   "TESLA_OUT_2.csv":validate_2,
+validation_func = {"TESLA_OUT_2.csv":validate_2,
 				   "TESLA_OUT_3.csv":validate_3,
 				   "TESLA_OUT_4.csv":validate_4,
 				   "TESLA_VCF.vcf":validateVCF,
 				   "TESLA_MAF.maf":validateMAF}
 
-def validate_files(filelist, patientId, validHLA, vcfValidator, validatingBAM=False):
-	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"]
+def validate_files(filelist, patientId, validHLA, validatingBAM=False):
+	required=["TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"]
 	vcfmaf = ["TESLA_VCF.vcf","TESLA_MAF.maf"]
 	if validatingBAM:
 		print("VALIDATING BAMS")
@@ -314,16 +320,14 @@ def validate_files(filelist, patientId, validHLA, vcfValidator, validatingBAM=Fa
 	for filepath in filelist:
 		if os.path.basename(filepath) in ['TESLA_OUT_2.csv', 'TESLA_OUT_3.csv']:
 			validation_func[os.path.basename(filepath)](filepath, validHLA)
-		elif os.path.basename(filepath) == "TESLA_VCF.vcf":
-			validation_func[os.path.basename(filepath)](filepath, vcfValidator)
 		elif not os.path.basename(filepath).endswith(".bam"):
 			validation_func[os.path.basename(filepath)](filepath)
-	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i]
+	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i or "TESLA_VCF" in i]
 	order = pd.np.argsort(onlyTesla)
-	print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,2,3}.csv")
-	validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[2]])
+	print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{2,3}.csv and maps to ID in TESLA_VCF.vcf")
+	validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[3]])
 	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4}.csv")
-	validate_STEP_ID(onlyTesla[order[2]],onlyTesla[order[3]])
+	validate_STEP_ID(onlyTesla[order[1]],onlyTesla[order[2]])
 	return(True, "Passed Validation!")
 
 
@@ -339,18 +343,16 @@ def perform_validate(args):
 	for i in validHLA:
 		final_validHLA.extend(i)
 	final_validHLA = set([i.split("(")[0] for i in final_validHLA])
-	validate_files(args.file, args.patientId, final_validHLA, args.vcfValidator, validatingBAM=args.validatingBAM)
+	validate_files(args.file, args.patientId, final_validHLA, validatingBAM=args.validatingBAM)
 	print("Passed Validation")
 
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Validate TESLA files per sample')
 	parser.add_argument("file", type=str, nargs="+",
-						help='path to TESLA files (Must have TESLA_OUT_{1..4}.csv and TESLA_VCF.vcf), bam files are optional (include --validatingBAM and --patientId parameters if you include the BAM files)')
+						help='path to TESLA files (Must have TESLA_OUT_{2..4}.csv and TESLA_VCF.vcf), bam files are optional (include --validatingBAM and --patientId parameters if you include the BAM files)')
 	parser.add_argument("--patientId",type=int, required=True,
 						help='Patient Id')
-	parser.add_argument("--vcfValidator",type=str, required=True,
-						help='Path to vcf validator executable. Download this link: ')
 	parser.add_argument("--validatingBAM",action="store_true")
 	args = parser.parse_args()
 	perform_validate(args)
