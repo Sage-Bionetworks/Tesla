@@ -252,6 +252,7 @@ def validateVCF(filePath):
 
 	required_string_cols = ['REF',"ALT",'FORMAT','TUMOR','NORMAL','ID']
 	opt_string_cols = ['FILTER','INFO']
+	submission['ID'] = submission['ID'].apply(str)
 	checkType(submission, required_string_cols, str, 'TESLA_VCF.vcf')
 	checkType(submission, opt_string_cols, str, 'TESLA_VCF.vcf',vcf=True)
 	assert sum(submission.ID.duplicated()) == 0, "TESLA_VCF.vcf: The ID column must not have any duplicates"
@@ -261,7 +262,7 @@ def validateVCF(filePath):
 	#I can also recommend a `bcftools query` command that will parse a VCF in a detailed way,
 	#and output with warnings or errors if the format is not adhered too
 	try:
-		cmd = ['docker','run','-v','%s:/TESLA_VCF.vcf' % filepath, "thomasvyu/vcf-validator"]
+		cmd = ['docker','run','-v','%s:/TESLA_VCF.vcf' % os.path.abspath(filePath), "thomasvyu/vcf-validator"]
 		#cmd = ['./%s' % vcfValidator, "-i", filePath]
 		p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
 	except OSError as e:
@@ -282,7 +283,7 @@ def validate_VAR_ID(submission2_filepath, submission3_filepath, submissionvcf_fi
 		for i in foo:
 			if i.startswith("#CHROM"):
 				headers = i.replace("\n","").split("\t")
-	submissionvcf = pd.read_csv(filePath, sep="\t",comment="#",header=None,names=headers)
+	submissionvcf = pd.read_csv(submissionvcf_filepath, sep="\t",comment="#",header=None,names=headers)
 
 	sub2 = intSemiColonListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID')
 	sub3 = intSemiColonListCheck(submission3, "TESLA_OUT_3.csv", 'VAR_ID')
@@ -324,8 +325,9 @@ def validate_files(filelist, patientId, validHLA, validatingBAM=False):
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i or "TESLA_VCF" in i]
 	order = pd.np.argsort(onlyTesla)
-	print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{2,3}.csv and maps to ID in TESLA_VCF.vcf")
-	validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[3]])
+	if "TESLA_MAF.maf" not in basenames:
+		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{2,3}.csv and maps to ID in TESLA_VCF.vcf")
+		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[3]])
 	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4}.csv")
 	validate_STEP_ID(onlyTesla[order[1]],onlyTesla[order[2]])
 	return(True, "Passed Validation!")
