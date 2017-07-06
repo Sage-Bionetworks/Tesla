@@ -98,7 +98,7 @@ def intSemiColonListCheck(submission, fileName, col):
 # 	checkDelimiter(submission, ['OA_CALLER'], "TESLA_OUT_1.csv")
 # 	return(True,"Passed Validation!")
 
-def validate_2(submission_filepath, validHLA):
+def validate_1_2(submission_filepath, validHLA):
 	"""
 	Validates second TESLA file
 
@@ -106,7 +106,7 @@ def validate_2(submission_filepath, validHLA):
 	"""
 	#VAR_ID have to check out with first file
 	print("VALIDATING %s" % submission_filepath)
-	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO","SCORE"])
+	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO","SCORE",'REF_ALLELE_EXP','ALT_ALLELE_EXP'])
 
 	submission = pd.read_csv(submission_filepath,na_values="n/a")
 	#CHECK: Required headers must exist in submission
@@ -121,7 +121,7 @@ def validate_2(submission_filepath, validHLA):
 	checkType(submission, string_cols, str, 'TESLA_OUT_2.csv')
 	submission['RANK_DESC'] = submission['RANK_DESC'].fillna('').apply(str)
 	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, 'TESLA_OUT_2.csv', optional=True)
-	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING','SCORE'], float, 'TESLA_OUT_2.csv', optional=True)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING','SCORE','REF_ALLELE_EXP','ALT_ALLELE_EXP'], float, 'TESLA_OUT_2.csv', optional=True)
 	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_","-"])
 	intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'PROT_POS')
 	intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'VAR_ID')
@@ -131,15 +131,14 @@ def validate_2(submission_filepath, validHLA):
 	assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "TESLA_OUT_2.csv: HLA_ALLELE must be part of this list for this patient: %s" % ", ".join(validHLA)
 	return(True,"Passed Validation!")
 
-
-def validate_3(submission_filepath, validHLA):
+def validate_3_4(submission_filepath, validHLA):
 	"""
 	Validates third TESLA file
 
 	:param submission_filepath: Path of submission file TESLA_OUT_3.csv
 	"""
 	print("VALIDATING %s" % submission_filepath)
-	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","STEP_ID"])
+	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","STEP_ID",'SCORE','REF_ALLELE_EXP','ALT_ALLELE_EXP'])
 	submission = pd.read_csv(submission_filepath,na_values="n/a")
 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_3.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 	if not submission.empty:
@@ -154,7 +153,7 @@ def validate_3(submission_filepath, validHLA):
 		checkType(submission, string_cols, str, 'TESLA_OUT_3.csv')
 		checkType(submission, ['STEP_ID'], int, 'TESLA_OUT_3.csv', optional=True)
 		checkType(submission, ['HLA_ALLELE_MUT'], str, 'TESLA_OUT_3.csv', optional=True)
-		checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_3.csv', optional=True)
+		checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING','REF_ALLELE_EXP','ALT_ALLELE_EXP'], float, 'TESLA_OUT_3.csv', optional=True)
 
 		assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 		assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_3.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
@@ -170,7 +169,7 @@ def turnInt(i):
 	return(i)
 
 #Validate workflow
-def validate_4(submission_filepath):
+def validate_5(submission_filepath):
 	"""
 	Validates fourth TESLA file
 
@@ -276,9 +275,12 @@ def validateMAF(filePath):
 	#print("VALIDATING %s" % filePath)
 	return(True, "Passed Validation!")
 
-def validate_VAR_ID(submission2_filepath, submission3_filepath, submissionvcf_filepath):
+def validate_VAR_ID(submission1_filepath, submission2_filepath, submission3_filepath, submission4_filepath, submissionvcf_filepath):
+	submission1 = pd.read_csv(submission1_filepath)
 	submission2 = pd.read_csv(submission2_filepath)
 	submission3 = pd.read_csv(submission3_filepath)
+	submission4 = pd.read_csv(submission4_filepath)
+
 	with open(submissionvcf_filepath,"r") as foo:
 		for i in foo:
 			if i.startswith("#CHROM"):
@@ -292,23 +294,29 @@ def validate_VAR_ID(submission2_filepath, submission3_filepath, submissionvcf_fi
 
 	return(True, "Passed Validation!")
 
-def validate_STEP_ID(submission3_filepath, submission4_filepath):
+def validate_STEP_ID(submission3_filepath, submission4_filepath, submission5_filepath):
 	submission3 = pd.read_csv(submission3_filepath)
 	submission4 = pd.read_csv(submission4_filepath)
+	submission5 = pd.read_csv(submission5_filepath)
 
 	submission3['STEP_ID'] = submission3['STEP_ID'].fillna(-1)
-	assert all(submission3['STEP_ID'].isin(submission4['STEP_ID'].append(pd.Series([-1])))), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_4.csv's STEP_IDs"
+	submission4['STEP_ID'] = submission4['STEP_ID'].fillna(-1)
+
+	assert all(submission3['STEP_ID'].isin(submission5['STEP_ID'].append(pd.Series([-1])))), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_5.csv's STEP_IDs"
+	assert all(submission4['STEP_ID'].isin(submission5['STEP_ID'].append(pd.Series([-1])))), "TESLA_OUT_4.csv STEP_ID's must be part of TESLA_OUT_5.csv's STEP_IDs"
 
 	return(True, "Passed Validation!")
 
-validation_func = {"TESLA_OUT_2.csv":validate_2,
-				   "TESLA_OUT_3.csv":validate_3,
-				   "TESLA_OUT_4.csv":validate_4,
+validation_func = {"TESLA_OUT_1.csv":validate_1_2,
+				   "TESLA_OUT_2.csv":validate_1_2,
+				   "TESLA_OUT_3.csv":validate_3_4,
+				   "TESLA_OUT_4.csv":validate_3_4,
+				   "TESLA_OUT_5.csv":validate_5,
 				   "TESLA_VCF.vcf":validateVCF,
 				   "TESLA_MAF.maf":validateMAF}
 
 def validate_files(filelist, patientId, validHLA, validatingBAM=False):
-	required=["TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"]
+	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv","TESLA_OUT_5.csv"]
 	vcfmaf = ["TESLA_VCF.vcf","TESLA_MAF.maf"]
 	if validatingBAM:
 		print("VALIDATING BAMS")
@@ -319,17 +327,17 @@ def validate_files(filelist, patientId, validHLA, validatingBAM=False):
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
 	assert sum(vcfmafFiles.isin(basenames)) == 1, "Must have TESLA_VCF.vcf or TESLA_MAF.maf file"
 	for filepath in filelist:
-		if os.path.basename(filepath) in ['TESLA_OUT_2.csv', 'TESLA_OUT_3.csv']:
+		if os.path.basename(filepath) in ['TESLA_OUT_1.csv','TESLA_OUT_2.csv','TESLA_OUT_3.csv','TESLA_OUT_4.csv']:
 			validation_func[os.path.basename(filepath)](filepath, validHLA)
 		elif not os.path.basename(filepath).endswith(".bam"):
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i or "TESLA_VCF" in i]
 	order = pd.np.argsort(onlyTesla)
 	if "TESLA_MAF.maf" not in basenames:
-		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{2,3}.csv and maps to ID in TESLA_VCF.vcf")
-		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[3]])
-	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4}.csv")
-	validate_STEP_ID(onlyTesla[order[1]],onlyTesla[order[2]])
+		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,2,3,4}.csv and maps to ID in TESLA_VCF.vcf")
+		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[2]],onlyTesla[order[3]],onlyTesla[order[5]])
+	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4,5}.csv")
+	validate_STEP_ID(onlyTesla[order[2]],onlyTesla[order[3]],onlyTesla[order[4]])
 	return(True, "Passed Validation!")
 
 

@@ -1,9 +1,2 @@
-VAR_ID,CHROM,POS,OA_CALLER
-1,2,217498305,Samtools;Sniper;VarScan
-2,4,40434704,Samtools;Sniper;Strelka
-3,6,41754573,Strelka
-4,6,43250725,Samtools;Sniper
-5,22,16202096,VarScan
-6,X,38119219,Samtools;Sniper;VarScan;Strelka
-7,Y,38119219,Samtools;Sniper;VarScan;Strelka
-8,MT,38119219,Samtools;Sniper;VarScan;Strelka
+RANK,ALT_EPI_SEQ,HLA_ALLELE,VAR_ID,REF_EPI_SEQ,PEP_LEN,PROT_POS,HLA_ALLELE_MUT,HLA_ALT_BINDING,HLA_REF_BINDING,RANK_METRICS,RANK_DESC,ADDN_INFO,SCORE,REF_ALLELE_EXP,ALT_ALLELE_EXP
+1,RMPGDRPTL,C*07:04( d ),6;4,GTPTAVGWG,9,219;3,,363.86,100.01,alt_binding:363.86;binding_diff:263.85,alt epitope amino acid sequence looks nice,this epitope is the best,2.3,3.3,4.1
