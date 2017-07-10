@@ -348,6 +348,7 @@ def perform_validate(args):
 	metadataTable = syn.tableQuery('SELECT * FROM syn8292741')
 	metadata = metadataTable.asDataFrame()
 	HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
+	HLA.drop_duplicates("classIHLAalleles",inplace=True)
 	assert args.patientId in metadata['patientId'], "Patient Id must be in the metadata"
 	listHLA = HLA['classIHLAalleles'][HLA['patientId'] == args.patientId]
 	validHLA = [i.replace("*","").split(";") for i in listHLA]
