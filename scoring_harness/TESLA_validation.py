@@ -316,7 +316,8 @@ def perform_validate(args):
 	metadata = metadataTable.asDataFrame()
 	HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
 	HLA.drop_duplicates("classIHLAalleles",inplace=True)
-	assert args.patientId in metadata['patientId'], "Patient Id must be in the metadata"
+	patientIds = set(metadata['patientId'][~metadata['patientId'].isnull()].apply(int))
+	assert args.patientId in patientIds, "Patient Id must be in the metadata"
 	listHLA = HLA['classIHLAalleles'][HLA['patientId'] == args.patientId]
 	validHLA = [i.replace("*","").split(";") for i in listHLA]
 	final_validHLA = []
