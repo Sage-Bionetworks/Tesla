@@ -310,9 +310,12 @@ def validate_files(filelist, patientId, validHLA, validatingBAM=False):
 
 def perform_validate(args):
 	syn = synapse_login()
-	metadataPath = syn.get("syn8371011").path
-	metadata = pd.read_csv(metadataPath)
+	#metadataPath = syn.get("syn8371011").path
+	#metadata = pd.read_csv(metadataPath)
+	metadataTable = syn.tableQuery('SELECT * FROM syn8292741')
+	metadata = metadataTable.asDataFrame()
 	HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
+	HLA.drop_duplicates("classIHLAalleles",inplace=True)
 	assert args.patientId in metadata['patientId'], "Patient Id must be in the metadata"
 	listHLA = HLA['classIHLAalleles'][HLA['patientId'] == args.patientId]
 	validHLA = [i.replace("*","").split(";") for i in listHLA]
