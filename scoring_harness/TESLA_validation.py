@@ -65,44 +65,11 @@ def intSemiColonListCheck(submission, fileName, col):
 		raise AssertionError("%s: %s can be semi-colon separated but all values must be integers." %(fileName, col))
 	return(pd.Series(allResults).astype(int))
 
-# def validate_1(submission_filepath):
-# 	"""
-# 	Validates first TESLA file
-
-# 	:param submission_filepath: Path of submission file TESLA_OUT_1.csv
-# 	"""
-# 	print("VALIDATING %s" % submission_filepath)
-# 	required_cols = pd.Series(["VAR_ID","CHROM","POS","OA_CALLER"])
-# 	integer_cols = ['VAR_ID','POS']
-# 	#NO duplicated VAR_ID
-# 	submission = pd.read_csv(submission_filepath)
-# 	#CHECK: Required headers must exist in submission
-# 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_1.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-# 	#CHECK: CHROM must be 1-22 or X
-# 	chroms = range(1,23)
-# 	chroms = [str(i) for i in chroms]
-# 	chroms.extend(["X","Y","MT"])
-# 	strchroms = ["chr"+i for i in chroms]
-# 	strchroms.pop()
-# 	strchroms.append("chrM")
-# 	submission.CHROM = submission.CHROM.astype(str)
-# 	if submission.CHROM[0].startswith("chr"):
-# 		assert all(submission.CHROM.isin(strchroms)), "TESLA_OUT_1.csv: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % "or ".join(set(submission.CHROM[~submission.CHROM.isin(strchroms)]))
-# 	else:
-# 		assert all(submission.CHROM.isin(chroms)), "TESLA_OUT_1.csv: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission.CHROM[~submission.CHROM.isin(chroms)]))
-# 	#CHECK: integer, string and float columns are correct types
-# 	checkType(submission, integer_cols, int, "TESLA_OUT_1.csv")
-# 	assert all(submission.VAR_ID == range(1, len(submission)+1)), "TESLA_OUT_1.csv: VAR_ID column must be sequencial and must start from 1 to the length of the data"
-# 	checkType(submission, ['OA_CALLER'], str, "TESLA_OUT_1.csv",optional=True)
-# 	submission['OA_CALLER'] = submission['OA_CALLER'].fillna('')
-# 	checkDelimiter(submission, ['OA_CALLER'], "TESLA_OUT_1.csv")
-# 	return(True,"Passed Validation!")
-
 def validate_1_2(submission_filepath, validHLA):
 	"""
-	Validates second TESLA file
+	Validates first and second TESLA file
 
-	:param submission_filepath: Path of submission file TESLA_OUT_2.csv
+	:param submission_filepath: Path of submission file TESLA_OUT_{1..2}.csv
 	"""
 	#VAR_ID have to check out with first file
 	print("VALIDATING %s" % submission_filepath)
@@ -133,9 +100,9 @@ def validate_1_2(submission_filepath, validHLA):
 
 def validate_3_4(submission_filepath, validHLA):
 	"""
-	Validates third TESLA file
+	Validates third and fourth TESLA file
 
-	:param submission_filepath: Path of submission file TESLA_OUT_3.csv
+	:param submission_filepath: Path of submission file TESLA_OUT_{3..4}.csv
 	"""
 	print("VALIDATING %s" % submission_filepath)
 	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","STEP_ID",'SCORE','REF_ALLELE_EXP','ALT_ALLELE_EXP'])
@@ -171,9 +138,9 @@ def turnInt(i):
 #Validate workflow
 def validate_5(submission_filepath):
 	"""
-	Validates fourth TESLA file
+	Validates fifth TESLA file
 
-	:param submission_filepath: Path of submission file TESLA_OUT_4.csv
+	:param submission_filepath: Path of submission file TESLA_OUT_5.csv
 	"""
 	print("VALIDATING %s" % submission_filepath)
 	required_cols = pd.Series(["STEP_ID","PREV_STEP_ID","DESC"])
