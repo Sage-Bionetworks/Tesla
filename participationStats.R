@@ -1,6 +1,9 @@
 library(synapseClient)
 synapseLogin()
-DATE_START = as.Date("2017-07-01")
+#Change DATE_START
+#Update the roundNum to just be space when doing new rounds
+#Change the roundNum to round%d when end of a round to save the plots
+DATE_START = as.Date("2017-7-07")
 getSubmissionCount = function(evalId, status) {
   LIMIT = 10
   OFFSET = 0
@@ -17,20 +20,22 @@ getSubmissionCount = function(evalId, status) {
           name = i$value 
         } else if (i$key == "patientId") {
           patientId = i$value
+        } else if (i$key == "round") {
+          rounds = i$value
         }
       }
-      c(x$createdOn, team, name, patientId)
+      c(x$createdOn, team, name, patientId, rounds)
     })
     OFFSET = OFFSET + LIMIT
     challenge_stats = append(challenge_stats, sub_stats)
   }
   challenge_stats_df = data.frame(do.call(rbind, challenge_stats))
-  colnames(challenge_stats_df) <- c("time","team","fileName", "patientId")
+  colnames(challenge_stats_df) <- c("time","team","fileName", "patientId","round")
   challenge_stats_df$Date = as.Date(challenge_stats_df$time)
   challenge_stats_df
 }
 
-submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId, round) {
+submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId, roundNum) {
   weeks = seq(DATE_START, Sys.Date(), "weeks")
   numSubs = sapply(weeks, function(x) x= 0)
   names(numSubs) <- weeks
@@ -45,33 +50,36 @@ submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId, rou
   for (i in seq_along(numSubs)[-1]-1) {
     numSubs[i+1] = numSubs[i] + numSubs[i+1]
   }
-  png(sprintf("%s_submissions.png", patientId),width = 600, height = 600)
+  png(sprintf("%s%s_submissions.png", roundNum, patientId),width = 600, height = 600)
   par(mar=c(8,4,4,2)+0.1)
   barplot(numSubs, main=sprintf("Number of Complete Submissions for patient: %s",patientId), ylab="Number of Submissions", las=3, ylim=c(0,max(numSubs)+1))
   mtext("Date", side=1, line=6)
   dev.off()
-  synStore(File(sprintf("%d_%s_submissions.png", round, patientId),parentId = challengeSynId))
+  synStore(File(sprintf("%s%s_submissions.png", roundNum, patientId),parentId = challengeSynId))
 }
 
-numTeamsOverTime = function(challenge_stats_df, challengeSynId, round) {
-  weeks <- seq(min(challenge_stats_df$Date), max(challenge_stats_df$Date)+6, "weeks")
-  weekSegment = sapply(challenge_stats_df$Date, function(x) {
-    as.character(tail(weeks[x >= weeks],n=1))
-  })
-  submissions <- table(as.Date(weekSegment),challenge_stats_df$team)
-  for (i in seq(2, nrow(submissions))) {
-    submissions[i,] = submissions[i-1,] + submissions[i,]
+numTeamsOverTime = function(challenge_stats_df, challengeSynId, roundNum) {
+  #weeks <- seq(min(challenge_stats_df$Date), max(challenge_stats_df$Date)+6, "weeks")
+  if (max(challenge_stats_df$Date) > DATE_START) {
+    weeks <- seq(DATE_START, Sys.Date()+6, "weeks")
+    weekSegment = sapply(challenge_stats_df$Date, function(x) {
+      as.character(tail(weeks[x >= weeks],n=1))
+    })
+    submissions <- table(as.Date(weekSegment),challenge_stats_df$team)
+    for (i in seq(2, nrow(submissions))) {
+      submissions[i,] = submissions[i-1,] + submissions[i,]
+    }
+    numberOfTeams = rowSums(submissions > 0)
+    dates = as.Date(names(numberOfTeams))
+    png(sprintf("%stotalTeamsSubmitted.png",roundNum),width=600, height=400)
+    plot(dates,numberOfTeams, xaxt="n",xlab = "Dates",ylab = "Number of Teams",main="Cumulative Number of Teams Submitted",ylim = c(0, max(numberOfTeams)),type = "l")
+    axis.Date(1, at = seq(min(challenge_stats_df$Date), Sys.Date()+6, "weeks"))
+    dev.off()
+    synStore(File(sprintf("%stotalTeamsSubmitted.png",roundNum),parentId = challengeSynId))
   }
-  numberOfTeams = rowSums(submissions > 0)
-  dates = as.Date(names(numberOfTeams))
-  png("totalTeamsSubmitted.png",width=600, height=400)
-  plot(dates,numberOfTeams, xaxt="n",xlab = "Dates",ylab = "Number of Teams",main="Cumulative Number of Teams Submitted",ylim = c(0, max(numberOfTeams)),type = "l")
-  axis.Date(1, at = seq(DATE_START, Sys.Date()+6, "weeks"))
-  dev.off()
-  synStore(File(sprintf("%s_totalTeamsSubmitted.png",round),parentId = challengeSynId))
 }
 
-plotStats <- function(patientId, challenge_stats_df) {
+plotStats <- function(patientId, challenge_stats_df, roundNum) {
   allFiles = c(sprintf("%s_RNA_T.bam",patientId),
                sprintf("%s_EXOME_N.bam",patientId),
                sprintf("%s_EXOME_T.bam",patientId),
@@ -89,19 +97,21 @@ plotStats <- function(patientId, challenge_stats_df) {
     submitted = submitted[order(submitted$Date,decreasing = F),]
     noDups = submitted[!duplicated(submitted$team, fromLast = T),]
   }
-  submissionsPerWeek(noDups, patientId, "syn7801079")
+  submissionsPerWeek(noDups, patientId, "syn7801079", roundNum=roundNum)
 }
 
 #TESLA STATS
 challenge_stats_df = getSubmissionCount(8116290, "VALIDATED")
 #metadata = synGet("syn8371011")
-metadata = synTableQuery('SELECT * FROM syn8292741')
+#metadataDf = read.csv(getFileLocation(metadata))
 
-metadataDf = read.csv(getFileLocation(metadata))
-for (i in unique(metadataDf$patientId)) {
-  plotStats(i, challenge_stats_df)
+metadata = synTableQuery('SELECT * FROM syn8292741 where round = "2"')
+metadataDf = metadata@values
+
+for (i in unique(metadataDf$patientId[!is.na(metadataDf$patientId)])) {
+  #plotStats(i, challenge_stats_df,"round1_")
+  plotStats(i, challenge_stats_df,"")
 }
 #Get cumulative teams submitted over time
-numTeamsOverTime(challenge_stats_df, "syn7801079")
-
-
+#numTeamsOverTime(challenge_stats_df, "syn7801079",roundNum='round1_')
+numTeamsOverTime(challenge_stats_df, "syn7801079",roundNum='')
