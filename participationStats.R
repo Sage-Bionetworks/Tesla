@@ -1,6 +1,6 @@
 library(synapseClient)
 synapseLogin()
-DATE_START = as.Date("2017-02-20")
+DATE_START = as.Date("2017-07-01")
 getSubmissionCount = function(evalId, status) {
   LIMIT = 10
   OFFSET = 0
@@ -30,7 +30,7 @@ getSubmissionCount = function(evalId, status) {
   challenge_stats_df
 }
 
-submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId) {
+submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId, round) {
   weeks = seq(DATE_START, Sys.Date(), "weeks")
   numSubs = sapply(weeks, function(x) x= 0)
   names(numSubs) <- weeks
@@ -50,10 +50,10 @@ submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId) {
   barplot(numSubs, main=sprintf("Number of Complete Submissions for patient: %s",patientId), ylab="Number of Submissions", las=3, ylim=c(0,max(numSubs)+1))
   mtext("Date", side=1, line=6)
   dev.off()
-  synStore(File(sprintf("%s_submissions.png", patientId),parentId = challengeSynId))
+  synStore(File(sprintf("%d_%s_submissions.png", round, patientId),parentId = challengeSynId))
 }
 
-numTeamsOverTime = function(challenge_stats_df, challengeSynId) {
+numTeamsOverTime = function(challenge_stats_df, challengeSynId, round) {
   weeks <- seq(min(challenge_stats_df$Date), max(challenge_stats_df$Date)+6, "weeks")
   weekSegment = sapply(challenge_stats_df$Date, function(x) {
     as.character(tail(weeks[x >= weeks],n=1))
@@ -68,7 +68,7 @@ numTeamsOverTime = function(challenge_stats_df, challengeSynId) {
   plot(dates,numberOfTeams, xaxt="n",xlab = "Dates",ylab = "Number of Teams",main="Cumulative Number of Teams Submitted",ylim = c(0, max(numberOfTeams)),type = "l")
   axis.Date(1, at = seq(DATE_START, Sys.Date()+6, "weeks"))
   dev.off()
-  synStore(File("totalTeamsSubmitted.png",parentId = challengeSynId))
+  synStore(File(sprintf("%s_totalTeamsSubmitted.png",round),parentId = challengeSynId))
 }
 
 plotStats <- function(patientId, challenge_stats_df) {
@@ -94,7 +94,9 @@ plotStats <- function(patientId, challenge_stats_df) {
 
 #TESLA STATS
 challenge_stats_df = getSubmissionCount(8116290, "VALIDATED")
-metadata = synGet("syn8371011")
+#metadata = synGet("syn8371011")
+metadata = synTableQuery('SELECT * FROM syn8292741')
+
 metadataDf = read.csv(getFileLocation(metadata))
 for (i in unique(metadataDf$patientId)) {
   plotStats(i, challenge_stats_df)

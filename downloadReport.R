@@ -2,7 +2,7 @@ library(RMySQL)
 library(synapseClient)
 synapseLogin()
 
-START = as.Date("2017-02-01")
+START = as.Date("2017-07-01")
 DAYS_BEFORE = as.numeric(Sys.Date() - START)
 
 mydb = dbConnect(MySQL(), user='tyu', password="", host='warehouse.c95bbsvwbjlu.us-east-1.rds.amazonaws.com')
