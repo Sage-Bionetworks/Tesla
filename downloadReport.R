@@ -2,7 +2,7 @@ library(RMySQL)
 library(synapseClient)
 synapseLogin()
 
-START = as.Date("2017-07-01")
+START = as.Date("2017-07-06")
 DAYS_BEFORE = as.numeric(Sys.Date() - START)
 
 mydb = dbConnect(MySQL(), user='tyu', password="", host='warehouse.c95bbsvwbjlu.us-east-1.rds.amazonaws.com')
@@ -93,11 +93,11 @@ notFastqDownloads <- apply(teamsDownloaded[!grepl("*fastq.gz",row.names(teamsDow
 vcfDownloads <- apply(teamsDownloaded[!grepl("*vcf.gz",row.names(teamsDownloaded)),],2, sum)
 bamDownloads <- apply(teamsDownloaded[!grepl("*bam",row.names(teamsDownloaded)),],2, sum)
 metadataDownloads <- apply(teamsDownloaded[!grepl("*csv|*txt|*xlsx",row.names(teamsDownloaded)),],2, sum)
-png("dataTypeDownloaded.png",width = 600, height=400)
-DLs = c("fastq" = sum(sumFastqDownloads>0), "vcf" = sum(vcfDownloads>0), "bam" = sum(bamDownloads>0), "metadata" = sum(metadataDownloads>0))
+png("round2_dataTypeDownloaded.png",width = 600, height=400)
+DLs = c("fastq" = sum(fastqDownloads>0), "vcf" = sum(vcfDownloads>0), "bam" = sum(bamDownloads>0), "metadata" = sum(metadataDownloads>0))
 barplot(DLs,main="Number of Teams Downloaded File Type", xlab = "File Type",ylab = "Number of Teams")
 dev.off()
-synStore(File("./dataTypeDownloaded.png",parentId = "syn8082860"))
+synStore(File("./round2_dataTypeDownloaded.png",parentId = "syn8082860"))
 
 NotFastqDownloadStats <- data.frame("downloadStats" = notFastqDownloads)
 write.csv(NotFastqDownloadStats, "vcfbam_downloadStats.csv",quote=F)
