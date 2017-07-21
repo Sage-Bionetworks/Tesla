@@ -6,7 +6,7 @@ START = as.Date("2017-07-06")
 DAYS_BEFORE = as.numeric(Sys.Date() - START)
 
 mydb = dbConnect(MySQL(), user='tyu', password="", host='warehouse.c95bbsvwbjlu.us-east-1.rds.amazonaws.com')
-
+#MUST UPDATE THE TABLE FIRST
 downloadReport1 = dbSendQuery(mydb, sprintf("SELECT PAR.ENTITY_ID, AR.USER_ID ,COUNT(*)
                                      FROM warehouse.PROCESSED_ACCESS_RECORD PAR,
                                      warehouse.ACCESS_RECORD AR,
@@ -34,7 +34,7 @@ downloadReport2Data$ID <- NULL
 downloadStats <- rbind(downloadReport1Data,
           downloadReport2Data)
 
-NOT_FOUND_FILES = c(8303327,8303410,8077800,8077817,8077818)
+NOT_FOUND_FILES = c(8303327,8303410,8077800,8077817,8077818,10156068,10166143,10166144,10166145,10166146,10166147,10166148)
 # downloadStats = downloadStats[!downloadStats$ENTITY_ID %in% NOT_FOUND_FILES,]
 # downloaded = table(downloadStats$ENTITY_ID)
 # names(downloaded) = paste0("syn",names(downloaded))
@@ -88,6 +88,11 @@ write.table(teamsDownloaded, "DownloadStats.csv",sep="\t",quote = F)
 #Number of teams downloaded data
 #Which teams have downloaded the data
 #Which ones haven't
+
+metadata = synTableQuery('SELECT * FROM syn8292741 where round = "2"')
+metadataDf = metadata@values
+#only download round 2 stuff
+teamsDownloaded = teamsDownloaded[metadataDf$name,]
 fastqDownloads <- apply(teamsDownloaded[grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
 notFastqDownloads <- apply(teamsDownloaded[!grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
 vcfDownloads <- apply(teamsDownloaded[!grepl("*vcf.gz",row.names(teamsDownloaded)),],2, sum)
