@@ -242,36 +242,37 @@ def validateMAF(filePath):
 	#print("VALIDATING %s" % filePath)
 	return(True, "Passed Validation!")
 
-def validate_VAR_ID(submission1_filepath, submission2_filepath, submission3_filepath, submission4_filepath, submissionvcf_filepath):
-	submission1 = pd.read_csv(submission1_filepath)
-	submission2 = pd.read_csv(submission2_filepath)
-	submission3 = pd.read_csv(submission3_filepath)
-	submission4 = pd.read_csv(submission4_filepath)
-
+def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_filepath, submission2_filepath=None, submission4_filepath=None):
 	with open(submissionvcf_filepath,"r") as foo:
 		for i in foo:
 			if i.startswith("#CHROM"):
 				headers = i.replace("\n","").split("\t")
 	submissionvcf = pd.read_csv(submissionvcf_filepath, sep="\t",comment="#",header=None,names=headers)
-
-	sub2 = intSemiColonListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID')
+	submission1 = pd.read_csv(submission1_filepath)
+	submission3 = pd.read_csv(submission3_filepath)
 	sub3 = intSemiColonListCheck(submission3, "TESLA_OUT_3.csv", 'VAR_ID')
-	assert all(sub2.isin(submissionvcf['ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
+	sub1 = intSemiColonListCheck(submission1, "TESLA_OUT_1.csv", 'VAR_ID')
 	assert all(sub3.isin(submissionvcf['ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
-
+	assert all(sub1.isin(submissionvcf['ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
+	if submission2_filepath is not None and submission4_filepath is not None:
+		submission2 = pd.read_csv(submission2_filepath)
+		submission4 = pd.read_csv(submission4_filepath)
+		sub2 = intSemiColonListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID')
+		assert all(sub2.isin(submissionvcf['ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
+		sub4 = intSemiColonListCheck(submission4, "TESLA_OUT_2.csv", 'VAR_ID')
+		assert all(sub4.isin(submissionvcf['ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
 	return(True, "Passed Validation!")
 
-def validate_STEP_ID(submission3_filepath, submission4_filepath, submission5_filepath):
+def validate_STEP_ID(submission3_filepath, submission5_filepath, submission4_filepath=None):
 	submission3 = pd.read_csv(submission3_filepath)
-	submission4 = pd.read_csv(submission4_filepath)
 	submission5 = pd.read_csv(submission5_filepath)
-
 	submission3['STEP_ID'] = submission3['STEP_ID'].fillna(-1)
-	submission4['STEP_ID'] = submission4['STEP_ID'].fillna(-1)
-
 	assert all(submission3['STEP_ID'].isin(submission5['STEP_ID'].append(pd.Series([-1])))), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_5.csv's STEP_IDs"
-	assert all(submission4['STEP_ID'].isin(submission5['STEP_ID'].append(pd.Series([-1])))), "TESLA_OUT_4.csv STEP_ID's must be part of TESLA_OUT_5.csv's STEP_IDs"
-
+	
+	if submission4_filepath is not None:
+		submission4 = pd.read_csv(submission4_filepath)
+		submission4['STEP_ID'] = submission4['STEP_ID'].fillna(-1)
+		assert all(submission4['STEP_ID'].isin(submission5['STEP_ID'].append(pd.Series([-1])))), "TESLA_OUT_4.csv STEP_ID's must be part of TESLA_OUT_5.csv's STEP_IDs"
 	return(True, "Passed Validation!")
 
 validation_func = {"TESLA_OUT_1.csv":validate_1_2,
@@ -283,16 +284,21 @@ validation_func = {"TESLA_OUT_1.csv":validate_1_2,
 				   "TESLA_MAF.maf":validateMAF}
 
 def validate_files(filelist, patientId, validHLA, validatingBAM=False):
-	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv","TESLA_OUT_5.csv"]
+	required=["TESLA_OUT_1.csv","TESLA_OUT_3.csv","TESLA_OUT_5.csv"]
+	optional = ["TESLA_OUT_2.csv", "TESLA_OUT_4.csv"]
 	vcfmaf = ["TESLA_VCF.vcf","TESLA_MAF.maf"]
 	if validatingBAM:
 		print("VALIDATING BAMS")
 		required.extend(["%s_EXOME_N.bam" % patientId ,"%s_EXOME_T.bam"% patientId,"%s_RNA_T.bam"% patientId])
 	requiredFiles = pd.Series(required)
 	vcfmafFiles = pd.Series(vcfmaf)
+	optionalFiles = pd.Series(optional)
 	basenames = [os.path.basename(name) for name in filelist]
+
+	useOptional = all(optionalFiles.isin(basenames))
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
 	assert sum(vcfmafFiles.isin(basenames)) == 1, "Must have TESLA_VCF.vcf or TESLA_MAF.maf file"
+	assert useOptional or sum(optionalFiles.isin(basenames)) == 0, "TESLA_OUT_2.csv, TESLA_OUT_4.csv.  Both files MUST either be present or missing.  If missing, you are missing predictions from VCF. If this is not as intended, please submit again."
 	for filepath in filelist:
 		if os.path.basename(filepath) in ['TESLA_OUT_1.csv','TESLA_OUT_2.csv','TESLA_OUT_3.csv','TESLA_OUT_4.csv']:
 			validation_func[os.path.basename(filepath)](filepath, validHLA)
@@ -301,11 +307,21 @@ def validate_files(filelist, patientId, validHLA, validatingBAM=False):
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i or "TESLA_VCF" in i]
 	order = pd.np.argsort(onlyTesla)
 	if "TESLA_MAF.maf" not in basenames:
-		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,2,3,4}.csv and maps to ID in TESLA_VCF.vcf")
-		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[2]],onlyTesla[order[3]],onlyTesla[order[5]])
-	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4,5}.csv")
-	validate_STEP_ID(onlyTesla[order[2]],onlyTesla[order[3]],onlyTesla[order[4]])
-	return(True, "Passed Validation!")
+		if useOptional:
+			print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,2,3,4}.csv and maps to ID in TESLA_VCF.vcf")
+			validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[2]],onlyTesla[order[5]],submission2_filepath=onlyTesla[order[1]],submission4_filepath=onlyTesla[order[3]])
+		else:
+			print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf")
+			validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[3]])
+
+	if useOptional:
+		print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4,5}.csv")
+		validate_STEP_ID(onlyTesla[order[2]],onlyTesla[order[4]],submission4_filepath=onlyTesla[order[3]])
+	else:
+		print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,5}.csv")
+		validate_STEP_ID(onlyTesla[order[1]],onlyTesla[order[2]])
+
+	return(True, useOptional, "Passed Validation!")
 
 
 def perform_validate(args):
@@ -331,7 +347,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Validate TESLA files per sample')
 	parser.add_argument("file", type=str, nargs="+",
-						help='path to TESLA files (Must have TESLA_OUT_{2..4}.csv and TESLA_VCF.vcf), bam files are optional (include --validatingBAM and --patientId parameters if you include the BAM files)')
+						help='path to TESLA files (Must have TESLA_OUT_{1..5}.csv and TESLA_VCF.vcf), bam files are optional (include --validatingBAM and --patientId parameters if you include the BAM files)')
 	parser.add_argument("--patientId",type=int, required=True,
 						help='Patient Id')
 	parser.add_argument("--validatingBAM",action="store_true")
