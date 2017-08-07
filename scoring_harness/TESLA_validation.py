@@ -302,7 +302,7 @@ def validate_files(filelist, patientId, validHLA, validatingBAM=False):
 	for filepath in filelist:
 		if os.path.basename(filepath) in ['TESLA_OUT_1.csv','TESLA_OUT_2.csv','TESLA_OUT_3.csv','TESLA_OUT_4.csv']:
 			validation_func[os.path.basename(filepath)](filepath, validHLA)
-		elif not os.path.basename(filepath).endswith(".bam"):
+		elif not os.path.basename(filepath).endswith(".bam") and os.path.basename(filepath) != "TESLA_ranking_method.txt":
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i or "TESLA_VCF" in i]
 	order = pd.np.argsort(onlyTesla)
