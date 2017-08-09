@@ -78,7 +78,7 @@ def validate_1_2(submission_filepath, validHLA):
 	submission = pd.read_csv(submission_filepath,na_values="n/a")
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_2.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-
+	submission['VAR_ID'] = submission['VAR_ID'].astype(str)
 	integer_cols = ['PEP_LEN',"RANK"]
 	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','REF_EPI_SEQ','RANK_METRICS','VAR_ID']
 	checkType(submission, integer_cols, int, 'TESLA_OUT_2.csv')
@@ -112,6 +112,7 @@ def validate_3_4(submission_filepath, validHLA):
 		#CHECK: Required headers must exist in submission
 		integer_cols = ['PEP_LEN']
 		string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ",'VAR_ID']
+		submission['VAR_ID'] = submission['VAR_ID'].astype(str)
 		intSemiColonListCheck(submission, "TESLA_OUT_3.csv", 'PROT_POS')
 		#intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'VAR_ID')
 
