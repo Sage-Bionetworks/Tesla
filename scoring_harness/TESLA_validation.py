@@ -80,7 +80,7 @@ def validate_1_2(submission_filepath, validHLA):
 	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_2.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
 
 	integer_cols = ['PEP_LEN',"RANK"]
-	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','REF_EPI_SEQ','RANK_METRICS']
+	string_cols = ['HLA_ALLELE','ALT_EPI_SEQ','REF_EPI_SEQ','RANK_METRICS','VAR_ID']
 	checkType(submission, integer_cols, int, 'TESLA_OUT_2.csv')
 	#CHECK: RANK must be ordered from 1 to nrows
 	assert all(submission.RANK == range(1, len(submission)+1)), "TESLA_OUT_2.csv: RANK column must be sequencial and must start from 1 to the length of the data"
@@ -91,7 +91,7 @@ def validate_1_2(submission_filepath, validHLA):
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING','SCORE','REF_ALLELE_EXP','ALT_ALLELE_EXP'], float, 'TESLA_OUT_2.csv', optional=True)
 	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_","-"])
 	intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'PROT_POS')
-	intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'VAR_ID')
+	#intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'VAR_ID')
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of REF_EPI_SEQ values must be equal to the PEP_LEN"
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "TESLA_OUT_2.csv: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN"
@@ -111,9 +111,9 @@ def validate_3_4(submission_filepath, validHLA):
 	if not submission.empty:
 		#CHECK: Required headers must exist in submission
 		integer_cols = ['PEP_LEN']
-		string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ"]
+		string_cols = ['HLA_ALLELE',"ALT_EPI_SEQ","REF_EPI_SEQ",'VAR_ID']
 		intSemiColonListCheck(submission, "TESLA_OUT_3.csv", 'PROT_POS')
-		intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'VAR_ID')
+		#intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'VAR_ID')
 
 		#CHECK: integer, string and float columns are correct types
 		checkType(submission, integer_cols, int, 'TESLA_OUT_3.csv')
