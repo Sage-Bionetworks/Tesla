@@ -48,6 +48,8 @@ def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 				message = "%s: Please fill blank/NA values with - that are equivalent to the length of the associated PEP_LEN.  (ie. if PEP_LEN is 5, then the REF_EPI_SEQ should be -----). All values in %s column must be type: %s"
 			else:
 				message = "%s: No blank/NA values allowed and all values in %s column must be type: %s"
+			if col == "VAR_ID":
+				assert all([i != "nan" for i in submission[col]]),  message % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)))
 			assert all(submission[col].apply(lambda x: isinstance(x, colType))), message % (fileName, col, re.sub(".+['](.+)['].+","\\1",str(colType)))
 
 def checkDelimiter(submission, cols, fileName, allowed=[';']):
