@@ -213,11 +213,11 @@ def validate(evaluation, canCancel, dry_run=False):
             status.canCancel = True
         if not is_valid:
             #UPDATE ROUND NUMBER
-            addAnnots.update({"FAILURE_REASON":validation_message, round:'2'})
+            addAnnots.update({"FAILURE_REASON":validation_message, "round":'2'})
         else:
             #UPDATE ROUND NUMBER
             addAnnots.update({"FAILURE_REASON":'',
-                              "submissionName":submission.entity.name, round:'2'})
+                              "submissionName":submission.entity.name, "round":'2'})
         uniqueId = randomString()
         addAnnots.update({"uniqueId":uniqueId})
         add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=False)
