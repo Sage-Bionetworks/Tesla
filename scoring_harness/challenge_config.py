@@ -76,6 +76,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
     patientId = re.sub("(\d+).+","\\1",submissionName)
     assert patientId.isdigit(), "Wrong filenaming convention"
     assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
+    hasVCF=False
     if submissionName.endswith(".zip"):
         assert submissionName == "%s.zip" % patientId, "Zip file must be named patientId.zip"
         #Unzip files here
