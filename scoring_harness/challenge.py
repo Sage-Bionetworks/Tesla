@@ -183,11 +183,15 @@ def validate(evaluation, canCancel, dry_run=False):
     sys.stdout.flush()
     team_mapping_table = syn.tableQuery('select * from syn8220615')
     team_mapping = team_mapping_table.asDataFrame()
-    metadataPath = syn.get("syn8371011").path
-    metadata = pd.read_csv(metadataPath)
-    patientIds = set(metadata.patientId)
+    #metadataPath = syn.get("syn8371011").path
+    #metadata = pd.read_csv(metadataPath)
+    #patientIds = set(metadata.patientId)
+    #HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
+    metadataTable = syn.tableQuery('SELECT * FROM syn8292741')
+    metadata = metadataTable.asDataFrame()
     HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
-
+    HLA.drop_duplicates("classIHLAalleles",inplace=True)
+    patientIds = set(metadata['patientId'][~metadata['patientId'].isnull()].apply(int))
     for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
 
         ## refetch the submission so that we get the file path
