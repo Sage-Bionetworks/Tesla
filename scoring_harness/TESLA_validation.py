@@ -253,16 +253,16 @@ def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_fi
 	submissionvcf = pd.read_csv(submissionvcf_filepath, sep="\t",comment="#",header=None,names=headers)
 	submission1 = pd.read_csv(submission1_filepath)
 	submission3 = pd.read_csv(submission3_filepath)
-	sub3 = intSemiColonListCheck(submission3, "TESLA_OUT_3.csv", 'VAR_ID')
-	sub1 = intSemiColonListCheck(submission1, "TESLA_OUT_1.csv", 'VAR_ID')
+	#sub3 = intSemiColonListCheck(submission3, "TESLA_OUT_3.csv", 'VAR_ID')
+	#sub1 = intSemiColonListCheck(submission1, "TESLA_OUT_1.csv", 'VAR_ID')
 	assert all(sub3.isin(submissionvcf['ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
 	assert all(sub1.isin(submissionvcf['ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
 	if submission2_filepath is not None and submission4_filepath is not None:
 		submission2 = pd.read_csv(submission2_filepath)
 		submission4 = pd.read_csv(submission4_filepath)
-		sub2 = intSemiColonListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID')
+		#sub2 = intSemiColonListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID')
 		assert all(sub2.isin(submissionvcf['ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
-		sub4 = intSemiColonListCheck(submission4, "TESLA_OUT_2.csv", 'VAR_ID')
+		#sub4 = intSemiColonListCheck(submission4, "TESLA_OUT_2.csv", 'VAR_ID')
 		assert all(sub4.isin(submissionvcf['ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
 	return(True, "Passed Validation!")
 
