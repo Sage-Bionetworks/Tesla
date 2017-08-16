@@ -245,7 +245,7 @@ def validateMAF(filePath):
 	#print("VALIDATING %s" % filePath)
 	return(True, "Passed Validation!")
 
-def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_filepath, submission2_filepath=None, submission4_filepath=None):
+def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_filepath, submission2_filepath=None, submission4_filepath=None,patientVCFDf=None):
 	with open(submissionvcf_filepath,"r") as foo:
 		for i in foo:
 			if i.startswith("#CHROM"):
@@ -262,9 +262,9 @@ def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_fi
 		submission2 = pd.read_csv(submission2_filepath)
 		submission4 = pd.read_csv(submission4_filepath)
 		#sub2 = intSemiColonListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID')
-		assert all(submission2['VAR_ID'].apply(str).isin(submissionvcf['ID'])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
+		assert all(submission2['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
 		#sub4 = intSemiColonListCheck(submission4, "TESLA_OUT_2.csv", 'VAR_ID')
-		assert all(submission4['VAR_ID'].apply(str).isin(submissionvcf['ID'])), "TESLA_OUT_4.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
+		assert all(submission4['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_4.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
 	return(True, "Passed Validation!")
 
 def validate_STEP_ID(submission3_filepath, submission5_filepath, submission4_filepath=None):
@@ -287,7 +287,7 @@ validation_func = {"TESLA_OUT_1.csv":validate_1_2,
 				   "TESLA_VCF.vcf":validateVCF,
 				   "TESLA_MAF.maf":validateMAF}
 
-def validate_files(filelist, patientId, validHLA, validatingBAM=False):
+def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 	required=["TESLA_OUT_1.csv","TESLA_OUT_3.csv","TESLA_OUT_5.csv"]
 	optional = ["TESLA_OUT_2.csv", "TESLA_OUT_4.csv"]
 	vcfmaf = ["TESLA_VCF.vcf","TESLA_MAF.maf"]
@@ -312,8 +312,12 @@ def validate_files(filelist, patientId, validHLA, validatingBAM=False):
 	order = pd.np.argsort(onlyTesla)
 	if "TESLA_MAF.maf" not in basenames:
 		if useOptional:
+			patientFiles = syn.tableQuery('SELECT * FROM syn8292741 where patientId = "%s" and fileFormat = "vcf"' % patientId)
+			patientFilesDf = patientFiles.asDataFrame()
+			patientVCFEnt = syn.get(patientFilesDf['id'][0])
+			patientVCFDf = pd.read_csv(patientVCFEnt.path,sep="\t",comment="#")
 			print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,2,3,4}.csv and maps to ID in TESLA_VCF.vcf")
-			validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[2]],onlyTesla[order[5]],submission2_filepath=onlyTesla[order[1]],submission4_filepath=onlyTesla[order[3]])
+			validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[2]],onlyTesla[order[5]],submission2_filepath=onlyTesla[order[1]],submission4_filepath=onlyTesla[order[3]],patientVCFDf=patientVCFDf)
 		else:
 			print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf")
 			validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[3]])
@@ -344,7 +348,7 @@ def perform_validate(args):
 	for i in validHLA:
 		final_validHLA.extend(i)
 	final_validHLA = set([i.split("(")[0] for i in final_validHLA])
-	validate_files(args.file, args.patientId, final_validHLA, validatingBAM=args.validatingBAM)
+	validate_files(syn, args.file, args.patientId, final_validHLA, validatingBAM=args.validatingBAM)
 	print("Passed Validation")
 
 if __name__ == "__main__":

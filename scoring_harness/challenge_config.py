@@ -111,7 +111,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
         validHLA = [i.replace("*","").split(";") for i in listHLA]
         validHLA = reduce(operator.add, validHLA)
         validHLA = set([i.split("(")[0] for i in validHLA])
-        validated, hasVCF, message = TESLA_val.validate_files(filelist,patientId,validHLA,validatingBAM=False)
+        validated, hasVCF, message = TESLA_val.validate_files(syn, filelist,patientId,validHLA,validatingBAM=False)
     else:
         assert submissionName in ["%s_EXOME_N.bam" % patientId,"%s_EXOME_T.bam" % patientId,"%s_RNA_T.bam" % patientId], "Bam files must be named patientId_EXOME_N.bam, patientId_EXOME_T.bam or patientId_RNA_T.bam"
     teamDict = {'patientId':patientId,
