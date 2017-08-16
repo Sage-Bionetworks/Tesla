@@ -315,7 +315,7 @@ def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 			patientFiles = syn.tableQuery('SELECT * FROM syn8292741 where patientId = "%s" and fileFormat = "vcf"' % patientId)
 			patientFilesDf = patientFiles.asDataFrame()
 			patientVCFEnt = syn.get(patientFilesDf['id'][0])
-			patientVCFDf = pd.read_csv(patientVCFEnt.path,sep="\t",comment="#")
+			patientVCFDf = pd.read_csv(patientVCFEnt.path,sep="\t",comment="#",header=None)
 			print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,2,3,4}.csv and maps to ID in TESLA_VCF.vcf")
 			validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[2]],onlyTesla[order[5]],submission2_filepath=onlyTesla[order[1]],submission4_filepath=onlyTesla[order[3]],patientVCFDf=patientVCFDf)
 		else:
