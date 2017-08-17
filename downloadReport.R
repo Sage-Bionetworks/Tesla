@@ -94,6 +94,7 @@ metadata = synTableQuery('SELECT * FROM syn8292741 where round = "2"')
 metadataDf = metadata@values
 #only download round 2 stuff
 teamsDownloaded = teamsDownloaded[metadataDf$name,]
+write.table(teamsDownloaded, "round2_DownloadStats.csv",sep="\t",quote = F)
 fastqDownloads <- apply(teamsDownloaded[grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
 notFastqDownloads <- apply(teamsDownloaded[!grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
 vcfDownloads <- apply(teamsDownloaded[!grepl("*vcf.gz",row.names(teamsDownloaded)),],2, sum)
