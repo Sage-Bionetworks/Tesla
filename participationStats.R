@@ -63,9 +63,15 @@ numTeamsOverTime = function(challenge_stats_df, challengeSynId, roundNum) {
   if (max(challenge_stats_df$Date) > DATE_START) {
     weeks <- seq(DATE_START, Sys.Date()+6, "weeks")
     weekSegment = sapply(challenge_stats_df$Date, function(x) {
-      as.character(tail(weeks[x >= weeks],n=1))
+      corDate = as.character(tail(weeks[x >= weeks],n=1))
+      if (length(corDate) >0) {
+        corDate
+      } else {
+        NA
+      }
     })
-    submissions <- table(as.Date(weekSegment),challenge_stats_df$team)
+    dontKeep = is.na(weekSegment)
+    submissions <- table(as.Date(unlist(weekSegment))[!dontKeep],challenge_stats_df$team[!dontKeep])
     for (i in seq(2, nrow(submissions))) {
       submissions[i,] = submissions[i-1,] + submissions[i,]
     }
@@ -73,7 +79,7 @@ numTeamsOverTime = function(challenge_stats_df, challengeSynId, roundNum) {
     dates = as.Date(names(numberOfTeams))
     png(sprintf("%stotalTeamsSubmitted.png",roundNum),width=600, height=400)
     plot(dates,numberOfTeams, xaxt="n",xlab = "Dates",ylab = "Number of Teams",main="Cumulative Number of Teams Submitted",ylim = c(0, max(numberOfTeams)),type = "l")
-    axis.Date(1, at = seq(min(challenge_stats_df$Date), Sys.Date()+6, "weeks"))
+    axis.Date(1, at = seq(min(dates), Sys.Date()+6, "weeks"))
     dev.off()
     synStore(File(sprintf("%stotalTeamsSubmitted.png",roundNum),parentId = challengeSynId))
   }
@@ -102,9 +108,6 @@ plotStats <- function(patientId, challenge_stats_df, roundNum) {
 
 #TESLA STATS
 challenge_stats_df = getSubmissionCount(8116290, "VALIDATED")
-#metadata = synGet("syn8371011")
-#metadataDf = read.csv(getFileLocation(metadata))
-
 metadata = synTableQuery('SELECT * FROM syn8292741 where round = "2"')
 metadataDf = metadata@values
 
@@ -114,4 +117,5 @@ for (i in unique(metadataDf$patientId[!is.na(metadataDf$patientId)])) {
 }
 #Get cumulative teams submitted over time
 #numTeamsOverTime(challenge_stats_df, "syn7801079",roundNum='round1_')
-numTeamsOverTime(challenge_stats_df, "syn7801079",roundNum='')
+numTeamsOverTime(challenge_stats_df, "syn7801079",roundNum='round2_')
+
