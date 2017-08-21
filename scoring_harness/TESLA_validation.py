@@ -265,9 +265,9 @@ def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_fi
 		submission2 = pd.read_csv(submission2_filepath)
 		submission4 = pd.read_csv(submission4_filepath)
 		#sub2 = intSemiColonListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID')
-		assert all(submission2['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_2.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
+		assert all(submission2['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_2.csv VAR_ID's must be part of the patient VCF's ID's"
 		#sub4 = intSemiColonListCheck(submission4, "TESLA_OUT_2.csv", 'VAR_ID')
-		assert all(submission4['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_4.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
+		assert all(submission4['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_4.csv VAR_ID's must be part of the patient VCF's ID's"
 	return(True, "Passed Validation!")
 
 def validate_STEP_ID(submission3_filepath, submission5_filepath, submission4_filepath=None):
