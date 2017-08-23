@@ -24,13 +24,25 @@ getSubmissionCount = function(evalId, status) {
           rounds = i$value
         }
       }
-      c(x$createdOn, team, name, patientId, rounds)
+      if (!exists("team")) {
+        team = "None"
+      }
+      if (!exists("name")) {
+        name = "None"
+      }
+      if (!exists("patientId")) {
+        patientId = "None"
+      }
+      if (!exists("rounds")) {
+        rounds = "None"
+      }
+      c(x$id, x$createdOn, team, name, patientId, rounds)
     })
     OFFSET = OFFSET + LIMIT
     challenge_stats = append(challenge_stats, sub_stats)
   }
   challenge_stats_df = data.frame(do.call(rbind, challenge_stats))
-  colnames(challenge_stats_df) <- c("time","team","fileName", "patientId","round")
+  colnames(challenge_stats_df) <- c("ID","time","team","fileName", "patientId","round")
   challenge_stats_df$Date = as.Date(challenge_stats_df$time)
   challenge_stats_df
 }
@@ -118,4 +130,31 @@ for (i in unique(metadataDf$patientId[!is.na(metadataDf$patientId)])) {
 #Get cumulative teams submitted over time
 #numTeamsOverTime(challenge_stats_df, "syn7801079",roundNum='round1_')
 numTeamsOverTime(challenge_stats_df, "syn7801079",roundNum='round2_')
+
+
+## STATS
+
+#only look at invalid only
+#Regenerate stats for teams that have submitted
+#How many of the teams submitted
+#which teams have valid submissions
+#which teams have invalid submissions
+#teams that submitted 2/4
+challenge_stats_df = getSubmissionCount(8116290, "VALIDATED")
+challenge_invalid_df = getSubmissionCount(8116290, "INVALID")
+
+round2_valid = challenge_stats_df[challenge_stats_df$round == 2,]
+zippedFiles = apply(round2_valid, 1, function(x) {
+  if (endsWith(x['fileName'], ".zip")) {
+    return(x[c('ID','team','fileName')])
+  }
+})
+allZipped = do.call(rbind,zippedFiles)
+validZippedFiles = table(allZipped[,"team"],allZipped[,'fileName'])
+write.csv(validZippedFiles,"round2_valid_zipped_files.csv")
+
+for (i in allZipped) {
+  
+}
+
 
