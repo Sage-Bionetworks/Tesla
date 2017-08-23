@@ -163,4 +163,7 @@ for (i in allZipped[,"ID"]) {
     hasTESLA2 = c(hasTESLA2, F)
   }
 }
+VCF_preds_zipped = allZipped[hasTESLA2,]
+validVCFZippedFiles = table(VCF_preds_zipped[,"team"],VCF_preds_zipped[,'fileName'])
 
+write.csv(validVCFZippedFiles,"round2_valid_VCF_zipped_files.csv")
