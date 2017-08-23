@@ -153,8 +153,14 @@ allZipped = do.call(rbind,zippedFiles)
 validZippedFiles = table(allZipped[,"team"],allZipped[,'fileName'])
 write.csv(validZippedFiles,"round2_valid_zipped_files.csv")
 
-for (i in allZipped) {
-  
+hasTESLA2 = c()
+for (i in allZipped[,"ID"]) {
+  sub = synGetSubmission(i)
+  foo = unzip(sub@filePath,list=T)
+  if (sum(foo$Name == "TESLA_OUT_2.csv") == 1) {
+    hasTESLA2 = c(hasTESLA2, T)
+  } else{
+    hasTESLA2 = c(hasTESLA2, F)
+  }
 }
-
 
