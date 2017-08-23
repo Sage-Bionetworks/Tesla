@@ -53,8 +53,9 @@ submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId, rou
   names(numSubs) <- weeks
   for (i in as.character(weeks)) {
     start = as.Date(i)
-    for (y in challenge_stats_df$Date) {
-      if (y > start && y < start+6) {
+    for (y in as.character(challenge_stats_df$Date)) {
+      yDate <- as.Date(y)
+      if (yDate >= start && yDate < start+7) {
         numSubs[i]= numSubs[i]+1
       }
     }
@@ -167,3 +168,12 @@ VCF_preds_zipped = allZipped[hasTESLA2,]
 validVCFZippedFiles = table(VCF_preds_zipped[,"team"],VCF_preds_zipped[,'fileName'])
 
 write.csv(validVCFZippedFiles,"round2_valid_VCF_zipped_files.csv")
+
+bamFiles = apply(round2_valid, 1, function(x) {
+  if (endsWith(x['fileName'], ".bam")) {
+    return(x[c('ID','team','fileName')])
+  }
+})
+allBams = do.call(rbind,bamFiles)
+allBams
+bamFiles = table(allBams[,"team"],allBams[,'fileName'])
