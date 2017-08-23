@@ -175,5 +175,5 @@ bamFiles = apply(round2_valid, 1, function(x) {
   }
 })
 allBams = do.call(rbind,bamFiles)
-allBams
 bamFiles = table(allBams[,"team"],allBams[,'fileName'])
+write.csv(bamFiles,"round2_bam_files.csv")
