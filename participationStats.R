@@ -50,6 +50,7 @@ getSubmissionCount = function(evalId, status) {
 submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId, roundNum) {
   weeks = seq(DATE_START, Sys.Date(), "weeks")
   numSubs = sapply(weeks, function(x) x= 0)
+  print(challenge_stats_df)
   names(numSubs) <- weeks
   for (i in as.character(weeks)) {
     start = as.Date(i)
@@ -65,7 +66,7 @@ submissionsPerWeek = function(challenge_stats_df, patientId, challengeSynId, rou
   }
   png(sprintf("%s%s_submissions.png", roundNum, patientId),width = 600, height = 600)
   par(mar=c(8,4,4,2)+0.1)
-  barplot(numSubs, main=sprintf("Number of Complete Submissions for patient: %s",patientId), ylab="Number of Submissions", las=3, ylim=c(0,max(numSubs)+1))
+  barplot(numSubs, main=sprintf("Number of Complete Submissions for patient: %s",patientId), ylab="Number of Submissions", las=3, ylim=c(0,25))
   mtext("Date", side=1, line=6)
   dev.off()
   synStore(File(sprintf("%s%s_submissions.png", roundNum, patientId),parentId = challengeSynId))
@@ -126,7 +127,7 @@ metadataDf = metadata@values
 
 for (i in unique(metadataDf$patientId[!is.na(metadataDf$patientId)])) {
   #plotStats(i, challenge_stats_df,"round1_")
-  plotStats(i, challenge_stats_df,"")
+  plotStats(i, challenge_stats_df, "")
 }
 #Get cumulative teams submitted over time
 #numTeamsOverTime(challenge_stats_df, "syn7801079",roundNum='round1_')
@@ -134,7 +135,6 @@ numTeamsOverTime(challenge_stats_df, "syn7801079",roundNum='round2_')
 
 
 ## STATS
-
 #only look at invalid only
 #Regenerate stats for teams that have submitted
 #How many of the teams submitted
@@ -177,3 +177,12 @@ bamFiles = apply(round2_valid, 1, function(x) {
 allBams = do.call(rbind,bamFiles)
 bamFiles = table(allBams[,"team"],allBams[,'fileName'])
 write.csv(bamFiles,"round2_bam_files.csv")
+challenge_stats_df
+
+database = synTableQuery('SELECT * FROM syn10407694')
+database@values$submissionId <- challenge_stats_df$ID
+database@values$team <- challenge_stats_df$team
+database@values$fileName <- challenge_stats_df$fileName
+database@values$patientId <- challenge_stats_df$patientId
+database@values$round <- challenge_stats_df$round
+database@values$dateTime <- challenge_stats_df$time
