@@ -76,6 +76,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
     patientId = re.sub("(\d+).+","\\1",submissionName)
     assert patientId.isdigit(), "Wrong filenaming convention"
     assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
+    hasVCF=False
     if submissionName.endswith(".zip"):
         assert submissionName == "%s.zip" % patientId, "Zip file must be named patientId.zip"
         #Unzip files here
@@ -92,19 +93,29 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
         tesla_out_2 = os.path.join(dirname,'TESLA_OUT_2.csv')
         tesla_out_3 = os.path.join(dirname,'TESLA_OUT_3.csv')
         tesla_out_4 = os.path.join(dirname,'TESLA_OUT_4.csv')
+        tesla_out_5 = os.path.join(dirname,'TESLA_OUT_5.csv')
+        tesla_ranking = os.path.join(dirname, 'TESLA_ranking_method.txt')
         tesla_vcf = os.path.join(dirname,'TESLA_VCF.vcf')
         tesla_maf = os.path.join(dirname,'TESLA_MAF.maf')
         other_file = tesla_maf if os.path.exists(tesla_maf) else tesla_vcf
-        filelist = [tesla_out_1,tesla_out_2,tesla_out_3,tesla_out_4,other_file]
-        assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv, and (TESLA_VCF.vcf or TESLA_MAF.maf) must all be in the zipped file.  Please do NOT put your files in a folder prior to zipping them."
+        filelist = [tesla_out_1,tesla_out_3,tesla_out_5,other_file]
+        optionalFiles = [tesla_out_2,tesla_out_4]
+        optionalExists = all([os.path.exists(i) for i in optionalFiles])
+        assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_3.csv, TESLA_OUT_5.csv, and (TESLA_VCF.vcf or TESLA_MAF.maf) must all be in the zipped file.  Please do NOT put your files in a folder prior to zipping them."
+        assert optionalExists or sum([os.path.exists(i) for i in optionalFiles]) == 0, "TESLA_OUT_2.csv, TESLA_OUT_4.csv.  Both files MUST either be present or missing.  If missing, you are missing predictions from VCF. If this is not as intended, please submit again."
+        if optionalExists:
+            filelist.extend(optionalFiles)
+        if os.path.exists(tesla_ranking):
+            filelist.append(tesla_ranking)
         listHLA = HLA['classIHLAalleles'][HLA['patientId'] == int(patientId)]
         validHLA = [i.replace("*","").split(";") for i in listHLA]
         validHLA = reduce(operator.add, validHLA)
         validHLA = set([i.split("(")[0] for i in validHLA])
-        TESLA_val.validate_files(filelist,patientId,validHLA,validatingBAM=False)
+        validated, hasVCF, message = TESLA_val.validate_files(syn, filelist,patientId,validHLA,validatingBAM=False)
     else:
         assert submissionName in ["%s_EXOME_N.bam" % patientId,"%s_EXOME_T.bam" % patientId,"%s_RNA_T.bam" % patientId], "Bam files must be named patientId_EXOME_N.bam, patientId_EXOME_T.bam or patientId_RNA_T.bam"
-    teamDict = {'patientId':patientId}
+    teamDict = {'patientId':patientId,
+                'hasVCF':hasVCF}
     return True, "Validation passed!", teamDict
 
 

@@ -4,8 +4,9 @@ synapseLogin()
 
 START = as.Date("2017-07-06")
 DAYS_BEFORE = as.numeric(Sys.Date() - START)
-
-mydb = dbConnect(MySQL(), user='tyu', password="", host='warehouse.c95bbsvwbjlu.us-east-1.rds.amazonaws.com')
+#set this environment variable in .Renviron
+datawareHousePW = Sys.getenv("SAGEDATAWAREHOUSEPW")
+mydb = dbConnect(MySQL(), user='tyu', password=datawareHousePW, host='warehouse.c95bbsvwbjlu.us-east-1.rds.amazonaws.com')
 #MUST UPDATE THE TABLE FIRST
 downloadReport1 = dbSendQuery(mydb, sprintf("SELECT PAR.ENTITY_ID, AR.USER_ID ,COUNT(*)
                                      FROM warehouse.PROCESSED_ACCESS_RECORD PAR,
@@ -93,6 +94,7 @@ metadata = synTableQuery('SELECT * FROM syn8292741 where round = "2"')
 metadataDf = metadata@values
 #only download round 2 stuff
 teamsDownloaded = teamsDownloaded[metadataDf$name,]
+write.table(teamsDownloaded, "round2_DownloadStats.csv",sep="\t",quote = F)
 fastqDownloads <- apply(teamsDownloaded[grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
 notFastqDownloads <- apply(teamsDownloaded[!grepl("*fastq.gz",row.names(teamsDownloaded)),],2, sum)
 vcfDownloads <- apply(teamsDownloaded[!grepl("*vcf.gz",row.names(teamsDownloaded)),],2, sum)
