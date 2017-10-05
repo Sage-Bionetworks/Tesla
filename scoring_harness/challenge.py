@@ -217,7 +217,7 @@ def validate(evaluation, canCancel, dry_run=False):
             status.canCancel = True
         if not is_valid:
             #UPDATE ROUND NUMBER
-            addAnnots.update({"FAILURE_REASON":validation_message, "round":'2'})
+            addAnnots.update({"FAILURE_REASON":validation_message[0:1000], "round":'2'})
         else:
             #UPDATE ROUND NUMBER
             addAnnots.update({"FAILURE_REASON":'',
