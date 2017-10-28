@@ -244,10 +244,6 @@ def validateVCF(filePath):
 	assert result, output
 	return(True,"Passed Validation!")
 
-def validateMAF(filePath):
-	#print("VALIDATING %s" % filePath)
-	return(True, "Passed Validation!")
-
 def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_filepath, submission2_filepath=None, submission4_filepath=None,patientVCFDf=None):
 	with open(submissionvcf_filepath,"r") as foo:
 		for i in foo:
@@ -287,24 +283,20 @@ validation_func = {"TESLA_OUT_1.csv":validate_1_2,
 				   "TESLA_OUT_3.csv":validate_3_4,
 				   "TESLA_OUT_4.csv":validate_3_4,
 				   "TESLA_OUT_5.csv":validate_5,
-				   "TESLA_VCF.vcf":validateVCF,
-				   "TESLA_MAF.maf":validateMAF}
+				   "TESLA_VCF.vcf":validateVCF}
 
 def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
-	required=["TESLA_OUT_1.csv","TESLA_OUT_3.csv","TESLA_OUT_5.csv"]
+	required=["TESLA_OUT_1.csv","TESLA_OUT_3.csv","TESLA_OUT_5.csv","TESLA_VCF.vcf"]
 	optional = ["TESLA_OUT_2.csv", "TESLA_OUT_4.csv"]
-	vcfmaf = ["TESLA_VCF.vcf","TESLA_MAF.maf"]
 	if validatingBAM:
 		print("VALIDATING BAMS")
 		required.extend(["%s_EXOME_N.bam" % patientId ,"%s_EXOME_T.bam"% patientId,"%s_RNA_T.bam"% patientId])
 	requiredFiles = pd.Series(required)
-	vcfmafFiles = pd.Series(vcfmaf)
 	optionalFiles = pd.Series(optional)
 	basenames = [os.path.basename(name) for name in filelist]
 
 	useOptional = all(optionalFiles.isin(basenames))
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
-	assert sum(vcfmafFiles.isin(basenames)) == 1, "Must have TESLA_VCF.vcf or TESLA_MAF.maf file"
 	assert useOptional or sum(optionalFiles.isin(basenames)) == 0, "TESLA_OUT_2.csv, TESLA_OUT_4.csv.  Both files MUST either be present or missing.  If missing, you are missing predictions from VCF. If this is not as intended, please submit again."
 	for filepath in filelist:
 		if os.path.basename(filepath) in ['TESLA_OUT_1.csv','TESLA_OUT_2.csv','TESLA_OUT_3.csv','TESLA_OUT_4.csv']:
@@ -313,17 +305,17 @@ def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i or "TESLA_VCF" in i]
 	order = pd.np.argsort(onlyTesla)
-	if "TESLA_MAF.maf" not in basenames:
-		if useOptional:
-			patientFiles = syn.tableQuery('SELECT * FROM syn8292741 where patientId = "%s" and fileFormat = "vcf"' % patientId)
-			patientFilesDf = patientFiles.asDataFrame()
-			patientVCFEnt = syn.get(patientFilesDf['id'][0])
-			patientVCFDf = pd.read_csv(patientVCFEnt.path,sep="\t",comment="#",header=None)
-			print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf and TESLA_OUT_{2,4}.csv maps to ID in %s" % patientVCFEnt.name)
-			validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[2]],onlyTesla[order[5]],submission2_filepath=onlyTesla[order[1]],submission4_filepath=onlyTesla[order[3]],patientVCFDf=patientVCFDf)
-		else:
-			print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf")
-			validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[3]])
+	
+	if useOptional:
+		patientFiles = syn.tableQuery('SELECT * FROM syn8292741 where patientId = "%s" and fileFormat = "vcf"' % patientId)
+		patientFilesDf = patientFiles.asDataFrame()
+		patientVCFEnt = syn.get(patientFilesDf['id'][0])
+		patientVCFDf = pd.read_csv(patientVCFEnt.path,sep="\t",comment="#",header=None)
+		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf and TESLA_OUT_{2,4}.csv maps to ID in %s" % patientVCFEnt.name)
+		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[2]],onlyTesla[order[5]],submission2_filepath=onlyTesla[order[1]],submission4_filepath=onlyTesla[order[3]],patientVCFDf=patientVCFDf)
+	else:
+		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf")
+		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[3]])
 
 	if useOptional:
 		print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4,5}.csv")

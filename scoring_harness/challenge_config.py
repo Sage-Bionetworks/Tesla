@@ -84,7 +84,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
         try:
             zfile = zipfile.ZipFile(submission.filePath)
         except zipfile.BadZipfile as e:
-            raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv and (TESLA_VCF.vcf or TESLA_MAF.maf)")
+            raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv and TESLA_VCF.vcf")
 
         for name in zfile.namelist():
           zfile.extract(name, dirname)
@@ -96,12 +96,10 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
         tesla_out_5 = os.path.join(dirname,'TESLA_OUT_5.csv')
         tesla_ranking = os.path.join(dirname, 'TESLA_ranking_method.txt')
         tesla_vcf = os.path.join(dirname,'TESLA_VCF.vcf')
-        tesla_maf = os.path.join(dirname,'TESLA_MAF.maf')
-        other_file = tesla_maf if os.path.exists(tesla_maf) else tesla_vcf
-        filelist = [tesla_out_1,tesla_out_3,tesla_out_5,other_file]
+        filelist = [tesla_out_1,tesla_out_3,tesla_out_5,tesla_vcf]
         optionalFiles = [tesla_out_2,tesla_out_4]
         optionalExists = all([os.path.exists(i) for i in optionalFiles])
-        assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_3.csv, TESLA_OUT_5.csv, and (TESLA_VCF.vcf or TESLA_MAF.maf) must all be in the zipped file.  Please do NOT put your files in a folder prior to zipping them."
+        assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_3.csv, TESLA_OUT_5.csv, and TESLA_VCF.vcf must all be in the zipped file.  Please do NOT put your files in a folder prior to zipping them."
         assert optionalExists or sum([os.path.exists(i) for i in optionalFiles]) == 0, "TESLA_OUT_2.csv, TESLA_OUT_4.csv.  Both files MUST either be present or missing.  If missing, you are missing predictions from VCF. If this is not as intended, please submit again."
         if optionalExists:
             filelist.extend(optionalFiles)
