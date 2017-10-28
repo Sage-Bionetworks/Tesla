@@ -106,7 +106,7 @@ def validate_2(submission_filepath, validHLA):
 	"""
 	#VAR_ID have to check out with first file
 	print("VALIDATING %s" % submission_filepath)
-	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO","SCORE"])
+	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO"])
 
 	submission = pd.read_csv(submission_filepath,na_values="n/a")
 	#CHECK: Required headers must exist in submission
@@ -121,7 +121,7 @@ def validate_2(submission_filepath, validHLA):
 	checkType(submission, string_cols, str, 'TESLA_OUT_2.csv')
 	submission['RANK_DESC'] = submission['RANK_DESC'].fillna('').apply(str)
 	checkType(submission, ['HLA_ALLELE_MUT',"RANK_DESC","ADDN_INFO"], str, 'TESLA_OUT_2.csv', optional=True)
-	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING','SCORE'], float, 'TESLA_OUT_2.csv', optional=True)
+	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING'], float, 'TESLA_OUT_2.csv', optional=True)
 	checkDelimiter(submission, ['RANK_METRICS'], "TESLA_OUT_2.csv",allowed=[';',':',".","_","-"])
 	intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'PROT_POS')
 	intSemiColonListCheck(submission, "TESLA_OUT_2.csv", 'VAR_ID')
@@ -205,7 +205,7 @@ def contains_whitespace(x):
 	return(sum([" " in i for i in x if isinstance(i, str)]))
 
 # Resolve missing read counts
-def validateVCF(filePath, vcfValidator):
+def validateVCF(filePath):
 	"""
 	This function validates the VCF file to make sure it adhere to the genomic SOP.
 
@@ -261,12 +261,6 @@ def validateVCF(filePath, vcfValidator):
 	#I can also recommend a `bcftools query` command that will parse a VCF in a detailed way,
 	#and output with warnings or errors if the format is not adhered too
 
-	cmd = ['./%s' % vcfValidator, "-i", filePath]
-	p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
-	output = p.stdout.read()
-	result = '\nAccording to the VCF specification, the input file is valid\n' in output
-	assert result, output
-
 	return(True,"Passed Validation!")
 
 def validateMAF(filePath):
@@ -300,7 +294,7 @@ validation_func = {"TESLA_OUT_1.csv":validate_1,
 				   "TESLA_VCF.vcf":validateVCF,
 				   "TESLA_MAF.maf":validateMAF}
 
-def validate_files(filelist, patientId, validHLA, vcfValidator, validatingBAM=False):
+def validate_files(filelist, patientId, validHLA, validatingBAM=False):
 	required=["TESLA_OUT_1.csv","TESLA_OUT_2.csv","TESLA_OUT_3.csv","TESLA_OUT_4.csv"]
 	vcfmaf = ["TESLA_VCF.vcf","TESLA_MAF.maf"]
 	if validatingBAM:
@@ -315,7 +309,7 @@ def validate_files(filelist, patientId, validHLA, vcfValidator, validatingBAM=Fa
 		if os.path.basename(filepath) in ['TESLA_OUT_2.csv', 'TESLA_OUT_3.csv']:
 			validation_func[os.path.basename(filepath)](filepath, validHLA)
 		elif os.path.basename(filepath) == "TESLA_VCF.vcf":
-			validation_func[os.path.basename(filepath)](filepath, vcfValidator)
+			validation_func[os.path.basename(filepath)](filepath)
 		elif not os.path.basename(filepath).endswith(".bam"):
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i]
@@ -339,7 +333,7 @@ def perform_validate(args):
 	for i in validHLA:
 		final_validHLA.extend(i)
 	final_validHLA = set([i.split("(")[0] for i in final_validHLA])
-	validate_files(args.file, args.patientId, final_validHLA, args.vcfValidator, validatingBAM=args.validatingBAM)
+	validate_files(args.file, args.patientId, final_validHLA, validatingBAM=args.validatingBAM)
 	print("Passed Validation")
 
 if __name__ == "__main__":
@@ -349,8 +343,6 @@ if __name__ == "__main__":
 						help='path to TESLA files (Must have TESLA_OUT_{1..4}.csv and TESLA_VCF.vcf), bam files are optional (include --validatingBAM and --patientId parameters if you include the BAM files)')
 	parser.add_argument("--patientId",type=int, required=True,
 						help='Patient Id')
-	parser.add_argument("--vcfValidator",type=str, required=True,
-						help='Path to vcf validator executable. Download this link: ')
 	parser.add_argument("--validatingBAM",action="store_true")
 	args = parser.parse_args()
 	perform_validate(args)
