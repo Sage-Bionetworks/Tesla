@@ -4,7 +4,7 @@ import pandas as pd
 import synapseclient
 syn = synapseclient.login()
 
-vcf2mafPath = "/home/ubuntu/vcf2maf-1.6.12"
+vcf2mafPath = "/home/ubuntu/vcf2maf-1.6.14"
 veppath = "/home/ubuntu/vep"
 vepdata = "/home/ubuntu/.vep"
 reference = "/home/ubuntu/.vep/homo_sapiens/86_GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
