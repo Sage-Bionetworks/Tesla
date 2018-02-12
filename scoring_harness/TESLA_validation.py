@@ -234,7 +234,7 @@ def validateVCF(filePath):
 	#I can also recommend a `bcftools query` command that will parse a VCF in a detailed way,
 	#and output with warnings or errors if the format is not adhered too
 	try:
-		cmd = ['docker','run','-v','%s:/TESLA_VCF.vcf' % os.path.abspath(filePath), "thomasvyu/vcf-validator"]
+		cmd = ['docker','run','-v','%s:/TESLA_VCF.vcf' % os.path.abspath(filePath), "thomasvyu/vcf-validator:0.6"]
 		#cmd = ['./%s' % vcfValidator, "-i", filePath]
 		p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
 	except OSError as e:
