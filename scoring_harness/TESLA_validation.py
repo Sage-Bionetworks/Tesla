@@ -60,12 +60,19 @@ def intSemiColonListCheck(submission, fileName, col):
 	allResults = []
 	results = [str(i).split(";") for i in submission[col]]
 	for i in results:
-		allResults.extend(i)
+			allResults.extend(i)
 	try:
 		[int(i) for i in allResults]
 	except ValueError as e:
 		raise AssertionError("%s: %s can be semi-colon separated but all values must be integers." %(fileName, col))
 	return(pd.Series(allResults).astype(int))
+
+def semiColonIdListCheck(submission, fileName, col, vcfIDs):
+	allResults = []
+	results = [str(i).replace(" ","").split(";") for i in submission[col]]
+	for i in results:
+		allResults.extend(i)
+	assert all(pd.Series(allResults).isin(vcfIDs)), "%s: %s can be semi-colon separated list but all values must be in your VCF ID column." %(fileName, col)
 
 def validate_1_2(submission_filepath, validHLA):
 	"""
@@ -252,18 +259,19 @@ def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_fi
 	submissionvcf = pd.read_csv(submissionvcf_filepath, sep="\t",comment="#",header=None,names=headers)
 	submission1 = pd.read_csv(submission1_filepath)
 	submission3 = pd.read_csv(submission3_filepath)
-	#sub3 = intSemiColonListCheck(submission3, "TESLA_OUT_3.csv", 'VAR_ID')
-	#sub1 = intSemiColonListCheck(submission1, "TESLA_OUT_1.csv", 'VAR_ID')
 	submissionvcf['ID'] = submissionvcf['ID'].apply(str)
-	assert all(submission3['VAR_ID'].apply(str).isin(submissionvcf['ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
-	assert all(submission1['VAR_ID'].apply(str).isin(submissionvcf['ID'])), "TESLA_OUT_1.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
+	semiColonIdListCheck(submission3, "TESLA_OUT_3.csv", 'VAR_ID', submissionvcf['ID'])
+	semiColonIdListCheck(submission1, "TESLA_OUT_1.csv", 'VAR_ID', submissionvcf['ID'])
+
+	#assert all(submission3['VAR_ID'].apply(str).isin(submissionvcf['ID'])), "TESLA_OUT_3.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
+	#assert all(submission1['VAR_ID'].apply(str).isin(submissionvcf['ID'])), "TESLA_OUT_1.csv VAR_ID's must be part of TESLA_VCF.vcf's IDs"
 	if submission2_filepath is not None and submission4_filepath is not None:
 		submission2 = pd.read_csv(submission2_filepath)
 		submission4 = pd.read_csv(submission4_filepath)
-		#sub2 = intSemiColonListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID')
-		assert all(submission2['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_2.csv VAR_ID's must be part of the patient VCF's ID's"
-		#sub4 = intSemiColonListCheck(submission4, "TESLA_OUT_2.csv", 'VAR_ID')
-		assert all(submission4['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_4.csv VAR_ID's must be part of the patient VCF's ID's"
+		semiColonIdListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID', submissionvcf['ID'])
+		#assert all(submission2['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_2.csv VAR_ID's must be part of the patient VCF's ID's"
+		semiColonIdListCheck(submission4, "TESLA_OUT_2.csv", 'VAR_ID', submissionvcf['ID'])
+		#assert all(submission4['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_4.csv VAR_ID's must be part of the patient VCF's ID's"
 	return(True, "Passed Validation!")
 
 def validate_STEP_ID(submission3_filepath, submission5_filepath, submission4_filepath=None):
