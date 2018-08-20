@@ -1,0 +1,140 @@
+"Inferring HLA status":
+  used: false
+  changed: false
+  comment: null
+"Calling mutations in tumor HLA":
+  used: false
+  changed: false
+  comment: null
+"RNAseq alignment and quantitation":
+  used: false
+  changed: false
+  comment: null
+"Exome-seq alignment":
+  used: false
+  changed: false
+  comment: null
+"Variant calling, annotation, and functional prediction":
+  used: false
+  changed: false
+  comment: null
+"Variant filtering:Targeted regions":
+  used: false
+  changed: false
+  comment: null
+"Variant filtering:Expression level":
+  used: false
+  changed: false
+  comment: null
+"Variant filtering:Found by multiple callers":
+  used: false
+  changed: false
+  comment: null
+"Variant filtering:Variant also found in RNAseq data":
+  used: false
+  changed: false
+  comment: null
+"Variant filtering:Genotype different in tumor and normal":
+  used: false
+  changed: false
+  comment: null
+"Variant filtering:Alignment quality filtering":
+  used: false
+  changed: false
+  comment: null
+"Variant filtering:dbSNP or pool of normals filtering":
+  used: false
+  changed: false
+  comment: null
+"Variant filtering:other":
+  used: false
+  changed: false
+  comment: null
+"Variant filtering:Peptide filtering":
+  used: false
+  changed: false
+  comment: null
+"Peptide filtering:Proteosomal processing":
+  used: false
+  changed: false
+  comment: null
+"Peptide filtering:TAP binding":
+  used: false
+  changed: false
+  comment: null
+"Peptide filtering:MHC binding":
+  used: false
+  changed: false
+  comment: null
+"Peptide filtering:MHC promiscuity":
+  used: false
+  changed: false
+  comment: null
+"Peptide filtering:MHC agretopicity":
+  used: false
+  changed: false
+  comment: null
+"Peptide filtering:TCR binding":
+  used: false
+  changed: false
+  comment: null
+"Peptide filtering:VAF":
+  used: false
+  changed: false
+  comment: null
+"Peptide filtering:Expression level":
+  used: false
+  changed: false
+  comment: null
+"Peptide filtering:Uniqueness":
+  used: false
+  changed: false
+  comment: null
+"Peptide filtering:other":
+  used: false
+  changed: false
+  comment: null
+"Peptide ranking:Proteosomal processing":
+  used: false
+  changed: false
+  comment: null
+"Peptide ranking:TAP binding":
+  used: false
+  changed: false
+  comment: null
+"Peptide ranking:MHC binding":
+  used: false
+  changed: false
+  comment: null
+"Peptide ranking:MHC promiscuity":
+  used: false
+  changed: false
+  comment: null
+"Peptide ranking:MHC agretopicity":
+  used: false
+  changed: false
+  comment: null
+"Peptide ranking:TCR binding":
+  used: false
+  changed: false
+  comment: null
+"Peptide ranking:VAF":
+  used: false
+  changed: false
+  comment: null
+"Peptide ranking:Expression level":
+  used: false
+  changed: false
+  comment: null
+"Peptide ranking:Uniqueness":
+  used: false
+  changed: false
+  comment: null
+"Peptide ranking:other":
+  used: false
+  changed: false
+  comment: null
+"Other":
+  used: false
+  changed: false
+  comment: null
