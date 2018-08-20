@@ -19,15 +19,21 @@ except ImportError:
 	print("Please Pandas")
 	print(">>> pip install pandas")
 	sys.exit(1)
+try:
+	import yaml
+except ImportError:
+	print("Please Install pyyaml")
+	print(">>> pip install pyyaml")
+	sys.exit(1)
 
 def synapse_login():
 	try:
 		syn = synapseclient.login()
 	except Exception as e:
 		print("Please provide your synapse username/email and password (You will only be prompted once)")
-		try: 
+		try:
 			input = raw_input
-		except NameError: 
+		except NameError:
 			pass
 		Username = input("Username: ")
 		Password = getpass.getpass()
@@ -148,31 +154,7 @@ def turnInt(i):
 		i = -2
 	return(i)
 
-#Validate workflow
-def validate_5(submission_filepath):
-	"""
-	Validates fifth TESLA file
 
-	:param submission_filepath: Path of submission file TESLA_OUT_5.csv
-	"""
-	print("VALIDATING %s" % submission_filepath)
-	required_cols = pd.Series(["STEP_ID","PREV_STEP_ID","DESC"])
-	submission = pd.read_csv(submission_filepath)
-	#CHECK: Required headers must exist in submission
-	assert all(required_cols.isin(submission.columns)), "TESLA_OUT_5.csv: These column headers are missing: %s" % ", ".join(required_cols[~required_cols.isin(submission.columns)])
-	
-	checkType(submission, ["STEP_ID"], int, 'TESLA_OUT_5.csv')
-	assert all(~submission['PREV_STEP_ID'].isnull()), "TESLA_OUT_5.csv: There must not be any NULL values in PREV_STEP_ID.  NULL values must be -1."
-	prevStepIds = [str(i).split(";") for i in submission['PREV_STEP_ID']]
-	final_prevStepIds = []
-	for i in prevStepIds:
-		final_prevStepIds.extend(i)
-	stepIds = submission['STEP_ID'].tolist()
-	stepIds.append(-1)
-	assert all([turnInt(i) in stepIds for i in final_prevStepIds]), "TESLA_OUT_5.csv: PREV_STEP_IDs must be -1 or existing STEP_IDs"
-	checkType(submission, ["DESC"], str, 'TESLA_OUT_4.csv')
-
-	return(True,"Passed Validation!")
 
 ### VALIDATING VCF
 def contains_whitespace(x):
@@ -220,7 +202,7 @@ def validateVCF(filePath):
 		assert all(submission['#CHROM'].isin(strchroms)), "TESLA_VCF.vcf: CHROM values must be chr1-22, chrX, chrY, or chrM. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(strchroms)]))
 	else:
 		assert all(submission['#CHROM'].isin(chroms)), "TESLA_VCF.vcf: CHROM values must be 1-22, X, Y, or MT. You have: %s" % ", ".join(set(submission['#CHROM'][~submission['#CHROM'].isin(chroms)]))
-	
+
 	#CHECK: integer, string columns are correct types and the missing value used must be .
 	checkType(submission, ['POS'], int, 'TESLA_VCF.vcf')
 	try:
@@ -251,6 +233,72 @@ def validateVCF(filePath):
 	assert result, output
 	return(True,"Passed Validation!")
 
+
+def validate_yaml(submission_filepath, template_filepath="../TESLA_YAML.yaml"):
+
+    """
+    Validate the TESLA submission yaml file.
+    :param submission_filepath: Path of submission file TESLA_YAML.yaml
+    :param template_filepath: Path of TESLA_YAML.yaml template
+    """
+    print("VALIDATING %s" % submission_filepath)
+
+    template = yaml.load(open(template_filepath))
+    submission = yaml.load(open(submission_filepath))
+    required_steps = template.keys()
+    submited_steps = submission.keys()
+
+    # check steps
+    missing_steps = [key for key in required_steps
+                     if key not in submited_steps]
+    assert len(missing_steps) == 0, (
+        "Step(s) missing from TESLA_YAML.yaml: [" +
+        ", ".join(missing_steps) + "]")
+
+    extra_steps = [key for key in submited_steps if key not in required_steps]
+    assert len(extra_steps) == 0, (
+        "Extra step(s) in TESLA_YAML.yaml: [" +
+        ", ".join(extra_steps) + "]")
+
+    # check used fields
+    missing_used_fields = [step for step in submited_steps
+                           if 'used' not in submission[step].keys()]
+    assert len(missing_used_fields) == 0, (
+        "Step(s) in TESLA_YAML.yaml are missing used field: "
+        "[" + ", ".join(missing_used_fields) + "]")
+
+    bad_used_fields = [step for step in submited_steps
+                       if type(submission[step]['used']) is not bool]
+    assert len(bad_used_fields) == 0, (
+        "Step(s) in TESLA_YAML.yaml have used fields that are not boolean: "
+        "[" + ", ".join(bad_used_fields) + "]")
+
+    steps_used = [step for step in submited_steps if submission[step]['used']]
+    assert len(steps_used) > 0, "No steps indicated in TESLA_OUT.yaml"
+
+    # check changed fields
+    missing_changed_fields = [step for step in submited_steps
+                              if 'changed' not in submission[step].keys()]
+    assert len(missing_changed_fields) == 0, (
+        "Step(s) in TESLA_YAML.yaml are missing changed field: "
+        "[" + ", ".join(missing_changed_fields) + "]")
+
+    bad_changed_fields = [step for step in submited_steps
+                          if type(submission[step]['changed']) is not bool]
+    assert len(bad_changed_fields) == 0, (
+        "Step(s) in TESLA_YAML.yaml have changed fields that are not boolean: "
+        "[" + ", ".join(bad_changed_fields) + "]")
+
+    # check comment fields
+    missing_comment_fields = [step for step in submited_steps
+                              if 'comment' not in submission[step].keys()]
+    assert len(missing_comment_fields) == 0, (
+        "Step(s) in TESLA_YAML.yaml are missing comment field: "
+        "[" + ", ".join(missing_comment_fields) + "]")
+
+    return(True, "Passed Validation!")
+
+
 def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_filepath, submission2_filepath=None, submission4_filepath=None,patientVCFDf=None):
 	with open(submissionvcf_filepath,"r") as foo:
 		for i in foo:
@@ -279,7 +327,7 @@ def validate_STEP_ID(submission3_filepath, submission5_filepath, submission4_fil
 	submission5 = pd.read_csv(submission5_filepath)
 	submission3['STEP_ID'] = submission3['STEP_ID'].fillna(-1)
 	assert all(submission3['STEP_ID'].isin(submission5['STEP_ID'].append(pd.Series([-1])))), "TESLA_OUT_3.csv STEP_ID's must be part of TESLA_OUT_5.csv's STEP_IDs"
-	
+
 	if submission4_filepath is not None:
 		submission4 = pd.read_csv(submission4_filepath)
 		submission4['STEP_ID'] = submission4['STEP_ID'].fillna(-1)
@@ -290,7 +338,7 @@ validation_func = {"TESLA_OUT_1.csv":validate_1_2,
 				   "TESLA_OUT_2.csv":validate_1_2,
 				   "TESLA_OUT_3.csv":validate_3_4,
 				   "TESLA_OUT_4.csv":validate_3_4,
-				   "TESLA_OUT_5.csv":validate_5,
+				   "TESLA_OUT_YAML.yaml":validate_yaml,
 				   "TESLA_VCF.vcf":validateVCF}
 
 def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
@@ -313,7 +361,7 @@ def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i or "TESLA_VCF" in i]
 	order = pd.np.argsort(onlyTesla)
-	
+
 	if useOptional:
 		patientFiles = syn.tableQuery('SELECT * FROM syn8292741 where patientId = "%s" and fileFormat = "vcf"' % patientId)
 		patientFilesDf = patientFiles.asDataFrame()
@@ -358,7 +406,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Validate TESLA files per sample')
 	parser.add_argument("file", type=str, nargs="+",
-						help='path to TESLA files (Must have TESLA_OUT_{1..5}.csv and TESLA_VCF.vcf), bam files are optional (include --validatingBAM and --patientId parameters if you include the BAM files)')
+						help='path to TESLA files (Must have TESLA_OUT_{1..4}.csv, TESLA_YAML.yaml and TESLA_VCF.vcf), bam files are optional (include --validatingBAM and --patientId parameters if you include the BAM files)')
 	parser.add_argument("--patientId",type=int, required=True,
 						help='Patient Id')
 	parser.add_argument("--validatingBAM",action="store_true")
