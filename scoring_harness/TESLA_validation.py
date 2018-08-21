@@ -121,7 +121,8 @@ def validate_3_4(submission_filepath, validHLA):
 	"""
 	print("VALIDATING %s" % submission_filepath)
 	basename = os.path.basename(submission_filepath)
-	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","STEP_ID",'SCORE','REF_ALLELE_EXP','ALT_ALLELE_EXP'])
+	required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ",'SCORE','REF_ALLELE_EXP','ALT_ALLELE_EXP'])
+	#required_cols = pd.Series(["VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","STEP_ID",'SCORE','REF_ALLELE_EXP','ALT_ALLELE_EXP'])
 	submission = pd.read_csv(submission_filepath,na_values="n/a")
 	assert all(required_cols.isin(submission.columns)), "%s: These column headers are missing: %s" % (basename,", ".join(required_cols[~required_cols.isin(submission.columns)]))
 	if not submission.empty:
@@ -136,9 +137,9 @@ def validate_3_4(submission_filepath, validHLA):
 		checkType(submission, integer_cols, int, basename)
 		checkType(submission, string_cols, str, basename)
 		#Fill STEP_ID na's with an integer and change the entire column to int
-		submission['STEP_ID'] = submission['STEP_ID'].fillna(-1)
-		submission['STEP_ID'] = submission['STEP_ID'].apply(int)
-		checkType(submission, ['STEP_ID'], int, basename, optional=True)
+		# submission['STEP_ID'] = submission['STEP_ID'].fillna(-1)
+		# submission['STEP_ID'] = submission['STEP_ID'].apply(int)
+		# checkType(submission, ['STEP_ID'], int, basename, optional=True)
 		checkType(submission, ['HLA_ALLELE_MUT'], str, basename, optional=True)
 		checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING','REF_ALLELE_EXP','ALT_ALLELE_EXP'], float, basename, optional=True)
 
@@ -342,7 +343,7 @@ validation_func = {"TESLA_OUT_1.csv":validate_1_2,
 				   "TESLA_VCF.vcf":validateVCF}
 
 def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
-	required=["TESLA_OUT_1.csv","TESLA_OUT_3.csv","TESLA_OUT_5.csv","TESLA_VCF.vcf"]
+	required=["TESLA_OUT_1.csv","TESLA_OUT_3.csv","TESLA_OUT_YAML.yaml","TESLA_VCF.vcf"]
 	optional = ["TESLA_OUT_2.csv", "TESLA_OUT_4.csv"]
 	if validatingBAM:
 		print("VALIDATING BAMS")
@@ -355,7 +356,7 @@ def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
 	assert useOptional or sum(optionalFiles.isin(basenames)) == 0, "TESLA_OUT_2.csv, TESLA_OUT_4.csv.  Both files MUST either be present or missing.  If missing, you are missing predictions from VCF. If this is not as intended, please submit again."
 	for filepath in filelist:
-		if os.path.basename(filepath) in ['TESLA_OUT_1.csv','TESLA_OUT_2.csv','TESLA_OUT_3.csv','TESLA_OUT_4.csv']:
+		if os.path.basename(filepath) in ['TESLA_OUT_1.csv','TESLA_OUT_2.csv','TESLA_OUT_3.csv','TESLA_OUT_YAML.yaml']:
 			validation_func[os.path.basename(filepath)](filepath, validHLA)
 		elif not os.path.basename(filepath).endswith(".bam") and os.path.basename(filepath) != "TESLA_ranking_method.txt":
 			validation_func[os.path.basename(filepath)](filepath)
@@ -373,12 +374,12 @@ def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf")
 		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[3]])
 
-	if useOptional:
-		print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4,5}.csv")
-		validate_STEP_ID(onlyTesla[order[2]],onlyTesla[order[4]],submission4_filepath=onlyTesla[order[3]])
-	else:
-		print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,5}.csv")
-		validate_STEP_ID(onlyTesla[order[1]],onlyTesla[order[2]])
+	# if useOptional:
+	# 	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4,5}.csv")
+	# 	validate_STEP_ID(onlyTesla[order[2]],onlyTesla[order[4]],submission4_filepath=onlyTesla[order[3]])
+	# else:
+	# 	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,5}.csv")
+	# 	validate_STEP_ID(onlyTesla[order[1]],onlyTesla[order[2]])
 
 	return(True, useOptional, "Passed Validation!")
 
