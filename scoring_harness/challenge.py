@@ -100,7 +100,7 @@ def update_single_submission_status(status, add_annotations):
         if status.get("annotations") is not None:
             if status.annotations.get(keys) is not None:
                 for annots in add_annotations[keys]:
-                    total_annots = filter(lambda input: input.get('key', None) == annots['key'], status.annotations[keys])
+                    total_annots = list(filter(lambda input: input.get('key', None) == annots['key'], status.annotations[keys]))
                     if len(total_annots) == 1:
                         total_annots[0]['value'] = annots['value']
                     else:
@@ -194,6 +194,8 @@ def validate(evaluation, canCancel, dry_run=False):
     HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
     HLA.drop_duplicates("classIHLAalleles",inplace=True)
     patientIds = set(metadata['patientId'][~metadata['patientId'].isnull()].apply(int))
+    #Must declare ex1 variable as it is used later
+    ex1=None
     for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
 
         ## refetch the submission so that we get the file path
@@ -210,7 +212,7 @@ def validate(evaluation, canCancel, dry_run=False):
             addAnnots.update(patientAnnot)
         except Exception as ex1:
             is_valid = False
-            print("Exception during validation:", type(ex1), ex1, ex1.message)
+            print("Exception during validation:", type(ex1), ex1)
             traceback.print_exc()
             validation_message = str(ex1)
 

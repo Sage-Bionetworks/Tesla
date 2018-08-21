@@ -189,7 +189,7 @@ def send_message(userIds, subject_template, message_template, kwargs):
             messageSubject=subject,
             messageBody=message,
             contentType="text/html")
-        print("sent: ", unicode(response).encode('utf-8'))
+        print("sent: ", str(response).encode('utf-8'))
         return response
     else:
         sys.stderr.write("Can't send message. No Synapse object configured\n")
