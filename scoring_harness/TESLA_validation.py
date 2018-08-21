@@ -224,13 +224,13 @@ def validateVCF(filePath):
 	#I can also recommend a `bcftools query` command that will parse a VCF in a detailed way,
 	#and output with warnings or errors if the format is not adhered too
 	try:
-		cmd = ['docker','run','-v','%s:/TESLA_VCF.vcf' % os.path.abspath(filePath), "thomasvyu/vcf-validator:0.6"]
+		cmd = ['docker','run','-v','%s:/TESLA_VCF.vcf' % os.path.abspath(filePath), "thomasvyu/vcf-validator"]
 		#cmd = ['./%s' % vcfValidator, "-i", filePath]
 		p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
 	except OSError as e:
 		raise ValueError('Please make sure docker is installed.')
-	output = p.stdout.read()
-	result = '\nAccording to the VCF specification, the input file is valid\n' in output
+	output = p.stdout.read().decode()
+	result = 'According to the VCF specification, the input file is valid\n' in output
 	assert result, output
 	return(True,"Passed Validation!")
 
@@ -242,8 +242,9 @@ def validate_yaml(submission_filepath, template_filepath="../TESLA_YAML.yaml"):
     :param submission_filepath: Path of submission file TESLA_YAML.yaml
     :param template_filepath: Path of TESLA_YAML.yaml template
     """
-    print("VALIDATING %s" % submission_filepath)
 
+    print("VALIDATING %s" % submission_filepath)
+    template_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)),"../TESLA_YAML.yaml")
     template = yaml.load(open(template_filepath))
     submission = yaml.load(open(submission_filepath))
     required_steps = template.keys()
@@ -275,7 +276,7 @@ def validate_yaml(submission_filepath, template_filepath="../TESLA_YAML.yaml"):
         "[" + ", ".join(bad_used_fields) + "]")
 
     steps_used = [step for step in submited_steps if submission[step]['used']]
-    assert len(steps_used) > 0, "No steps indicated in TESLA_OUT.yaml"
+    assert len(steps_used) > 0, "No steps indicated in TESLA_YAML.yaml"
 
     # check changed fields
     missing_changed_fields = [step for step in submited_steps
@@ -319,7 +320,7 @@ def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_fi
 		submission4 = pd.read_csv(submission4_filepath)
 		semiColonIdListCheck(submission2, "TESLA_OUT_2.csv", 'VAR_ID', submissionvcf['ID'])
 		#assert all(submission2['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_2.csv VAR_ID's must be part of the patient VCF's ID's"
-		semiColonIdListCheck(submission4, "TESLA_OUT_2.csv", 'VAR_ID', submissionvcf['ID'])
+		semiColonIdListCheck(submission4, "TESLA_OUT_4.csv", 'VAR_ID', submissionvcf['ID'])
 		#assert all(submission4['VAR_ID'].apply(str).isin(patientVCFDf[2])), "TESLA_OUT_4.csv VAR_ID's must be part of the patient VCF's ID's"
 	return(True, "Passed Validation!")
 
@@ -339,11 +340,11 @@ validation_func = {"TESLA_OUT_1.csv":validate_1_2,
 				   "TESLA_OUT_2.csv":validate_1_2,
 				   "TESLA_OUT_3.csv":validate_3_4,
 				   "TESLA_OUT_4.csv":validate_3_4,
-				   "TESLA_OUT_YAML.yaml":validate_yaml,
+				   "TESLA_YAML.yaml":validate_yaml,
 				   "TESLA_VCF.vcf":validateVCF}
 
 def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
-	required=["TESLA_OUT_1.csv","TESLA_OUT_3.csv","TESLA_OUT_YAML.yaml","TESLA_VCF.vcf"]
+	required=["TESLA_OUT_1.csv","TESLA_OUT_3.csv","TESLA_YAML.yaml","TESLA_VCF.vcf"]
 	optional = ["TESLA_OUT_2.csv", "TESLA_OUT_4.csv"]
 	if validatingBAM:
 		print("VALIDATING BAMS")
@@ -356,23 +357,22 @@ def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 	assert all(requiredFiles.isin(basenames)), "All %d submission files must be present and submission files must be named %s" % (len(required), ", ".join(required))
 	assert useOptional or sum(optionalFiles.isin(basenames)) == 0, "TESLA_OUT_2.csv, TESLA_OUT_4.csv.  Both files MUST either be present or missing.  If missing, you are missing predictions from VCF. If this is not as intended, please submit again."
 	for filepath in filelist:
-		if os.path.basename(filepath) in ['TESLA_OUT_1.csv','TESLA_OUT_2.csv','TESLA_OUT_3.csv','TESLA_OUT_YAML.yaml']:
+		if os.path.basename(filepath) in ['TESLA_OUT_1.csv','TESLA_OUT_2.csv','TESLA_OUT_3.csv','TESLA_OUT_4.csv']:
 			validation_func[os.path.basename(filepath)](filepath, validHLA)
 		elif not os.path.basename(filepath).endswith(".bam") and os.path.basename(filepath) != "TESLA_ranking_method.txt":
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i or "TESLA_VCF" in i]
 	order = pd.np.argsort(onlyTesla)
-
 	if useOptional:
-		patientFiles = syn.tableQuery('SELECT * FROM syn8292741 where patientId = "%s" and fileFormat = "vcf"' % patientId)
+		patientFiles = syn.tableQuery("SELECT * FROM syn8292741 where patientId = '%s' and fileFormat = 'vcf'" % patientId)
 		patientFilesDf = patientFiles.asDataFrame()
 		patientVCFEnt = syn.get(patientFilesDf['id'][0])
 		patientVCFDf = pd.read_csv(patientVCFEnt.path,sep="\t",comment="#",header=None)
 		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf and TESLA_OUT_{2,4}.csv maps to ID in %s" % patientVCFEnt.name)
-		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[2]],onlyTesla[order[5]],submission2_filepath=onlyTesla[order[1]],submission4_filepath=onlyTesla[order[3]],patientVCFDf=patientVCFDf)
+		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[2]],onlyTesla[order[4]],submission2_filepath=onlyTesla[order[1]],submission4_filepath=onlyTesla[order[3]],patientVCFDf=patientVCFDf)
 	else:
 		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf")
-		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[3]])
+		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[2]])
 
 	# if useOptional:
 	# 	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4,5}.csv")
