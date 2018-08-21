@@ -24,7 +24,7 @@ ADMIN_USER_IDS = [3324230]
 
 evaluation_queues = [
     {
-        'id':8116290,
+        'id':9614007,
         'validation_func':TESLA_val.validate_files
     }
 ]
