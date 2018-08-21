@@ -230,7 +230,7 @@ def validateVCF(filePath):
 	except OSError as e:
 		raise ValueError('Please make sure docker is installed.')
 	output = p.stdout.read().decode()
-	result = 'According to the VCF specification, the input file is valid\n' in output
+	result = 'According to the VCF specification, the input file is valid\n' in output and "warning" not in output
 	assert result, output
 	return(True,"Passed Validation!")
 
