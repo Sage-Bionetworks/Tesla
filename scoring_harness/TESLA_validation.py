@@ -247,6 +247,8 @@ def validate_yaml(submission_filepath, template_filepath="../TESLA_YAML.yaml"):
     submission = yaml.load(open(submission_filepath))
     required_steps = template.keys()
     submited_steps = submission.keys()
+    parameter_steps = [key for key in required_steps
+                       if "key_parameters" in template[key].keys()]
 
     # check steps
     missing_steps = [key for key in required_steps
@@ -295,6 +297,52 @@ def validate_yaml(submission_filepath, template_filepath="../TESLA_YAML.yaml"):
     assert len(missing_comment_fields) == 0, (
         "Step(s) in TESLA_YAML.yaml are missing comment field: "
         "[" + ", ".join(missing_comment_fields) + "]")
+
+    # check key_parameters fields
+    missing_key_parameters = [step for step in parameter_steps
+                              if 'key_parameters' not in
+                              submission[step].keys()]
+
+    assert len(missing_key_parameters) == 0, (
+        "Step(s) in TESLA_YAML.yaml are missing key_parameters field: "
+        "[" + ", ".join(missing_key_parameters) + "]")
+
+    used_key_parameters = [step for step in parameter_steps
+                           if submission[step]['key_parameters'] is not None]
+
+    VALUE_RELATIONSHIPS = [">", ">=", "=", "<=", "<"]
+    CATEGORY_RELATIONSHIPS = ["in", "not"]
+    ALL_RELATIONSHIPS = VALUE_RELATIONSHIPS + CATEGORY_RELATIONSHIPS
+
+    for step in used_key_parameters:
+        for param in submission[step]['key_parameters']:
+
+            assert 'name' in param.keys(), (
+                "Step: " + step + " key parmater missing name field.")
+
+            assert 'relationship' in param.keys(), (
+                "Step: " + step + " key parameter: " + param['name'] +
+                " missing relationship field.")
+
+            assert param['relationship'] in ALL_RELATIONSHIPS, (
+                "Step: " + step + " key parameter: " + param['name'] +
+                " not one of [" + " ".join(ALL_RELATIONSHIPS) + "].")
+
+            if param['relationship'] in VALUE_RELATIONSHIPS:
+
+                assert 'unit' in param.keys(), (
+                    "Step: " + step + " key parameter: " + param['name'] +
+                    " missing unit field.")
+
+                assert 'value' in param.keys(), (
+                    "Step: " + step + " key parameter: " + param['name'] +
+                    " missing value field.")
+
+            if param['relationship'] in CATEGORY_RELATIONSHIPS:
+
+                assert 'values' in param.keys(), (
+                    "Step: " + step + " key parameter: " + param['name'] +
+                    " missing values field.")
 
     return(True, "Passed Validation!")
 
