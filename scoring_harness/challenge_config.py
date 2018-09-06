@@ -9,6 +9,11 @@ import zipfile
 import os
 import re
 import operator
+#Python3 does not support reduce
+try:
+    reduce
+except NameError:
+    from functools import reduce
 ## A Synapse project will hold the assetts for your challenge. Put its
 ## synapse ID here, for example
 CHALLENGE_SYN_ID = "syn7362874"
@@ -24,7 +29,7 @@ ADMIN_USER_IDS = [3324230]
 
 evaluation_queues = [
     {
-        'id':8116290,
+        'id':9614007,
         'validation_func':TESLA_val.validate_files
     }
 ]
@@ -76,42 +81,43 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
     patientId = re.sub("(\d+).+","\\1",submissionName)
     assert patientId.isdigit(), "Wrong filenaming convention"
     assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
+    assert submissionName.endswith(".zip"),"Must submit a zip file"
     hasVCF=False
-    if submissionName.endswith(".zip"):
-        assert submissionName == "%s.zip" % patientId, "Zip file must be named patientId.zip"
-        #Unzip files here
-        dirname = os.path.dirname(submission.entity.path)
-        try:
-            zfile = zipfile.ZipFile(submission.filePath)
-        except zipfile.BadZipfile as e:
-            raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv and TESLA_VCF.vcf")
+    #if submissionName.endswith(".zip"):
+    assert submissionName == "%s.zip" % patientId, "Zip file must be named patientId.zip"
+    #Unzip files here
+    dirname = os.path.dirname(submission.entity.path)
+    try:
+        zfile = zipfile.ZipFile(submission.filePath)
+    except zipfile.BadZipfile as e:
+        raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv, TESLA_YAML.yaml and TESLA_VCF.vcf")
 
-        for name in zfile.namelist():
-          zfile.extract(name, dirname)
+    for name in zfile.namelist():
+      zfile.extract(name, dirname)
 
-        tesla_out_1 = os.path.join(dirname,'TESLA_OUT_1.csv')
-        tesla_out_2 = os.path.join(dirname,'TESLA_OUT_2.csv')
-        tesla_out_3 = os.path.join(dirname,'TESLA_OUT_3.csv')
-        tesla_out_4 = os.path.join(dirname,'TESLA_OUT_4.csv')
-        tesla_out_5 = os.path.join(dirname,'TESLA_OUT_5.csv')
-        tesla_ranking = os.path.join(dirname, 'TESLA_ranking_method.txt')
-        tesla_vcf = os.path.join(dirname,'TESLA_VCF.vcf')
-        filelist = [tesla_out_1,tesla_out_3,tesla_out_5,tesla_vcf]
-        optionalFiles = [tesla_out_2,tesla_out_4]
-        optionalExists = all([os.path.exists(i) for i in optionalFiles])
-        assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_3.csv, TESLA_OUT_5.csv, and TESLA_VCF.vcf must all be in the zipped file.  Please do NOT put your files in a folder prior to zipping them."
-        assert optionalExists or sum([os.path.exists(i) for i in optionalFiles]) == 0, "TESLA_OUT_2.csv, TESLA_OUT_4.csv.  Both files MUST either be present or missing.  If missing, you are missing predictions from VCF. If this is not as intended, please submit again."
-        if optionalExists:
-            filelist.extend(optionalFiles)
-        if os.path.exists(tesla_ranking):
-            filelist.append(tesla_ranking)
-        listHLA = HLA['classIHLAalleles'][HLA['patientId'] == int(patientId)]
-        validHLA = [i.replace("*","").split(";") for i in listHLA]
-        validHLA = reduce(operator.add, validHLA)
-        validHLA = set([i.split("(")[0] for i in validHLA])
-        validated, hasVCF, message = TESLA_val.validate_files(syn, filelist,patientId,validHLA,validatingBAM=False)
-    else:
-        assert submissionName in ["%s_EXOME_N.bam" % patientId,"%s_EXOME_T.bam" % patientId,"%s_RNA_T.bam" % patientId], "Bam files must be named patientId_EXOME_N.bam, patientId_EXOME_T.bam or patientId_RNA_T.bam"
+    tesla_out_1 = os.path.join(dirname,'TESLA_OUT_1.csv')
+    tesla_out_2 = os.path.join(dirname,'TESLA_OUT_2.csv')
+    tesla_out_3 = os.path.join(dirname,'TESLA_OUT_3.csv')
+    tesla_out_4 = os.path.join(dirname,'TESLA_OUT_4.csv')
+    tesla_yaml = os.path.join(dirname,'TESLA_YAML.yaml')
+    tesla_ranking = os.path.join(dirname, 'TESLA_ranking_method.txt')
+    tesla_vcf = os.path.join(dirname,'TESLA_VCF.vcf')
+    filelist = [tesla_out_1,tesla_out_3,tesla_yaml,tesla_vcf]
+    optionalFiles = [tesla_out_2,tesla_out_4]
+    optionalExists = all([os.path.exists(i) for i in optionalFiles])
+    assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_3.csv, TESLA_OUT_5.csv, and TESLA_YAML.yaml must all be in the zipped file.  Please do NOT put your files in a folder prior to zipping them."
+    assert optionalExists or sum([os.path.exists(i) for i in optionalFiles]) == 0, "TESLA_OUT_2.csv, TESLA_OUT_4.csv.  Both files MUST either be present or missing.  If missing, you are missing predictions from VCF. If this is not as intended, please submit again."
+    if optionalExists:
+        filelist.extend(optionalFiles)
+    if os.path.exists(tesla_ranking):
+        filelist.append(tesla_ranking)
+    listHLA = HLA['classIHLAalleles'][HLA['patientId'] == int(patientId)]
+    validHLA = [i.replace("*","").split(";") for i in listHLA]
+    validHLA = reduce(operator.add, validHLA)
+    validHLA = set([i.split("(")[0] for i in validHLA])
+    validated, hasVCF, message = TESLA_val.validate_files(syn, filelist,patientId,validHLA,validatingBAM=False)
+    # else:
+    #     assert submissionName in ["%s_EXOME_N.bam" % patientId,"%s_EXOME_T.bam" % patientId,"%s_RNA_T.bam" % patientId], "Bam files must be named patientId_EXOME_N.bam, patientId_EXOME_T.bam or patientId_RNA_T.bam"
     teamDict = {'patientId':patientId,
                 'hasVCF':hasVCF}
     return True, "Validation passed!", teamDict

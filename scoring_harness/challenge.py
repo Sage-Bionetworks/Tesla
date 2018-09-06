@@ -29,8 +29,10 @@ from synapseclient.annotations import from_submission_status_annotations
 
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from itertools import izip
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 import copy
 
 import argparse
@@ -98,7 +100,7 @@ def update_single_submission_status(status, add_annotations):
         if status.get("annotations") is not None:
             if status.annotations.get(keys) is not None:
                 for annots in add_annotations[keys]:
-                    total_annots = filter(lambda input: input.get('key', None) == annots['key'], status.annotations[keys])
+                    total_annots = list(filter(lambda input: input.get('key', None) == annots['key'], status.annotations[keys]))
                     if len(total_annots) == 1:
                         total_annots[0]['value'] = annots['value']
                     else:
@@ -178,8 +180,8 @@ def validate(evaluation, canCancel, dry_run=False):
     if type(evaluation) != Evaluation:
         evaluation = syn.getEvaluation(evaluation)
 
-    print "\n\nValidating", evaluation.id, evaluation.name
-    print "-" * 60
+    print("\n\nValidating", evaluation.id, evaluation.name)
+    print("-" * 60)
     sys.stdout.flush()
     team_mapping_table = syn.tableQuery('select * from syn8220615')
     team_mapping = team_mapping_table.asDataFrame()
@@ -192,13 +194,15 @@ def validate(evaluation, canCancel, dry_run=False):
     HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
     HLA.drop_duplicates("classIHLAalleles",inplace=True)
     patientIds = set(metadata['patientId'][~metadata['patientId'].isnull()].apply(int))
+    #Must declare ex1 variable as it is used later
+    ex1=None
     for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
 
         ## refetch the submission so that we get the file path
         ## to be later replaced by a "downloadFiles" flag on getSubmissionBundles
         submission = syn.getSubmission(submission,downloadFile=False)
         ex1 = None #Must define ex1 in case there is no error
-        print "validating", submission.id, submission.name
+        print("validating", submission.id, submission.name)
         addAnnots = {}
         try:
             is_valid, validation_message, addAnnots = conf.validate_teamname(syn, evaluation, submission, team_mapping)
@@ -208,7 +212,7 @@ def validate(evaluation, canCancel, dry_run=False):
             addAnnots.update(patientAnnot)
         except Exception as ex1:
             is_valid = False
-            print "Exception during validation:", type(ex1), ex1, ex1.message
+            print("Exception during validation:", type(ex1), ex1)
             traceback.print_exc()
             validation_message = str(ex1)
 
@@ -261,8 +265,8 @@ def score(evaluation, canCancel, dry_run=False):
     if type(evaluation) != Evaluation:
         evaluation = syn.getEvaluation(evaluation)
 
-    print '\n\nScoring ', evaluation.id, evaluation.name
-    print "-" * 60
+    print('\n\nScoring ', evaluation.id, evaluation.name)
+    print("-" * 60)
     sys.stdout.flush()
 
     for submission, status in syn.getSubmissionBundles(evaluation, status='VALIDATED'):
@@ -276,7 +280,7 @@ def score(evaluation, canCancel, dry_run=False):
         try:
             score, message = conf.score_submission(evaluation, submission)
 
-            print "scored:", submission.id, submission.name, submission.userId, score
+            print("scored:", submission.id, submission.name, submission.userId, score)
 
             ## fill in team in submission status annotations
             if 'teamId' in submission:
@@ -389,7 +393,7 @@ def update_leaderboard_table(leaderboard_table, submission, fields, dry_run=Fals
     row['values'] = [fields.get(col['name'], None) for col in rowset['headers']]
 
     if dry_run:
-        print mode, "row "+row['rowId'] if 'rowId' in row else "new row", row['values']
+        print(mode, "row "+row['rowId'] if 'rowId' in row else "new row", row['values'])
     else:
         return syn.store(rowset)
 
@@ -430,20 +434,20 @@ def query(evaluation, columns, out=sys.stdout):
 def list_submissions(evaluation, status=None, **kwargs):
     if isinstance(evaluation, basestring):
         evaluation = syn.getEvaluation(evaluation)
-    print '\n\nSubmissions for: %s %s' % (evaluation.id, evaluation.name.encode('utf-8'))
-    print '-' * 60
+    print('\n\nSubmissions for: %s %s' % (evaluation.id, evaluation.name.encode('utf-8')))
+    print('-' * 60)
 
     for submission, status in syn.getSubmissionBundles(evaluation, status=status):
-        print submission.id, submission.createdOn, status.status, submission.name.encode('utf-8'), submission.userId
+        print(submission.id, submission.createdOn, status.status, submission.name.encode('utf-8'), submission.userId)
 
 
 def list_evaluations(project):
-    print '\n\nEvaluations for project: ', utils.id_of(project)
-    print '-' * 60
+    print('\n\nEvaluations for project: ', utils.id_of(project))
+    print('-' * 60)
 
     evaluations = syn.getEvaluationByContentSource(project)
     for evaluation in evaluations:
-        print "Evaluation: %s" % evaluation.id, evaluation.name.encode('utf-8')
+        print("Evaluation: %s" % evaluation.id, evaluation.name.encode('utf-8'))
 
 
 def archive(evaluation, destination=None, name=None, query=None):
@@ -468,8 +472,8 @@ def archive(evaluation, destination=None, name=None, query=None):
     if not name:
         name = 'submissions_%s.tgz' % utils.id_of(evaluation)
     tar_path = os.path.join(tempdir, name)
-    print "creating tar at:", tar_path
-    print results.headers
+    print("creating tar at:", tar_path)
+    print(results.headers)
     with tarfile.open(tar_path, mode='w:gz') as archive:
         with open(os.path.join(tempdir, 'submission_metadata.csv'), 'w') as f:
             f.write( (','.join(hdr for hdr in (results.headers + ['filename'])) + '\n').encode('utf-8') )
@@ -479,14 +483,14 @@ def archive(evaluation, destination=None, name=None, query=None):
                 prefixed_filename = submission.id + "_" + os.path.basename(submission.filePath)
                 archive.add(submission.filePath, arcname=os.path.join(archive_dirname, prefixed_filename))
                 line = (','.join(unicode(item) for item in (result+[prefixed_filename]))).encode('utf-8')
-                print line
+                print(line)
                 f.write(line + '\n')
         archive.add(
             name=os.path.join(tempdir, 'submission_metadata.csv'),
             arcname=os.path.join(archive_dirname, 'submission_metadata.csv'))
 
     entity = syn.store(File(tar_path, parent=destination), evaluation_id=utils.id_of(evaluation))
-    print "created:", entity.id, entity.name
+    print("created:", entity.id, entity.name)
     return entity.id
 
 
@@ -519,9 +523,9 @@ def command_check_status(args):
     ## deleting the entity key is a hack to work around a bug which prevents
     ## us from printing a submission
     del submission['entity']
-    print unicode(evaluation).encode('utf-8')
-    print unicode(submission).encode('utf-8')
-    print unicode(status).encode('utf-8')
+    print(unicode(evaluation).encode('utf-8'))
+    print(unicode(submission).encode('utf-8'))
+    print(unicode(status).encode('utf-8'))
 
 
 def command_reset(args):
@@ -530,22 +534,22 @@ def command_reset(args):
             for submission, status in syn.getSubmissionBundles(queue_info['id'], status="SCORED"):
                 status.status = args.status
                 if not args.dry_run:
-                    print unicode(syn.store(status)).encode('utf-8')
+                    print(unicode(syn.store(status)).encode('utf-8'))
     elif args.rescore:
         for queue_id in args.rescore:
             for submission, status in syn.getSubmissionBundles(queue_id, status="SCORED"):
                 status.status = args.status
                 if args.dry_run:
-                    print "dry-run: ", submission.id, status.status
+                    print("dry-run: ", submission.id, status.status)
                 else:
-                    print "reset: ", submission.id, status.status
+                    print("reset: ", submission.id, status.status)
                     #print unicode(syn.store(status)).encode('utf-8')
     else:
         for submission in args.submission:
             status = syn.getSubmissionStatus(submission)
             status.status = args.status
             if not args.dry_run:
-                print unicode(syn.store(status)).encode('utf-8')
+                print(unicode(syn.store(status)).encode('utf-8'))
 
 
 def command_validate(args):
@@ -580,7 +584,7 @@ def command_leaderboard(args):
     if args.out is not None:
         with open(args.out, 'w') as f:
             query(args.evaluation, columns=leaderboard_cols, out=f)
-        print "Wrote leaderboard out to:", args.out
+        print("Wrote leaderboard out to:", args.out)
     else:
         query(args.evaluation, columns=leaderboard_cols)
 
@@ -660,14 +664,14 @@ def main():
 
     args = parser.parse_args()
 
-    print "\n" * 2, "=" * 75
-    print datetime.utcnow().isoformat()
+    print("\n" * 2, "=" * 75)
+    print(datetime.utcnow().isoformat())
 
     ## Acquire lock, don't run two scoring scripts at once
     try:
         update_lock = lock.acquire_lock_or_fail('challenge', max_age=timedelta(hours=4))
     except lock.LockedException:
-        print u"Is the scoring script already running? Can't acquire lock."
+        print("Is the scoring script already running? Can't acquire lock.")
         # can't acquire lock, so return error code 75 which is a
         # temporary error according to /usr/include/sysexits.h
         return 75
@@ -702,8 +706,8 @@ def main():
     finally:
         update_lock.release()
 
-    print "\ndone: ", datetime.utcnow().isoformat()
-    print "=" * 75, "\n" * 2
+    print("\ndone: ", datetime.utcnow().isoformat())
+    print("=" * 75, "\n" * 2)
 
 
 if __name__ == '__main__':
