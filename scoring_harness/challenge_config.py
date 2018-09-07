@@ -9,6 +9,7 @@ import zipfile
 import os
 import re
 import operator
+import pandas as pd
 #Python3 does not support reduce
 try:
     reduce
@@ -26,11 +27,21 @@ CHALLENGE_NAME = "TESLA_consortium"
 ADMIN_USER_IDS = [3324230]
 
 
+def get_auprc(submission, goldstandard_path):
+    dirname = os.path.dirname(submission.entity.path)
+    zfile = zipfile.ZipFile(submission.filePath)
+    for name in zfile.namelist():
+        zfile.extract(name, dirname)
+    submission_path = os.path.join(dirname, 'TESLA_OUT_1.csv')
+    submission_df = pd.read_csv(submission_path)
+    goldstandard_df = pd.read_csv(goldstandard_path)
+
 
 evaluation_queues = [
     {
         'id':9614007,
-        'validation_func':TESLA_val.validate_files
+        'validation_func':TESLA_val.validate_files,
+        'scoring_func': get_auprc
     }
 ]
 evaluation_queue_by_id = {q['id']:q for q in evaluation_queues}
@@ -125,7 +136,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
 
 def score_submission(evaluation, submission):
     """
-    Find the right scoring function and score the submission
+    Find the right scoring function and score the submission.
 
     :returns: (score, message) where score is a dict of stats and message
               is text for display to user
@@ -133,6 +144,4 @@ def score_submission(evaluation, submission):
     config = evaluation_queue_by_id[int(evaluation.id)]
     score = config['scoring_func'](submission, config['goldstandard_path'])
     #Make sure to round results to 3 or 4 digits
-    return (dict(score=round(score[0],4), rmse=score[1], auc=score[2]), "You did fine!")
-
-
+    return (dict(auprc=round(score[0], 4)), "You did fine!")
