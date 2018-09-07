@@ -7,6 +7,7 @@
 import TESLA_validation as TESLA_val
 import zipfile
 import os
+import sys
 import re
 import operator
 import pandas as pd
@@ -28,20 +29,54 @@ ADMIN_USER_IDS = [3324230]
 
 
 def get_auprc(submission, goldstandard_path):
+    submission_name = submission.entity.name
+    patient_id = re.sub("(\d+).+", "\\1", submission_name)
     dirname = os.path.dirname(submission.entity.path)
     zfile = zipfile.ZipFile(submission.filePath)
     for name in zfile.namelist():
         zfile.extract(name, dirname)
     submission_path = os.path.join(dirname, 'TESLA_OUT_1.csv')
     submission_df = pd.read_csv(submission_path)
+    submission_df = submission_df.loc[:, ["RANK", "HLA_ALLELE", "ALT_EPI_SEQ"]]
+    submission_df = submission_df.dropna()
     goldstandard_df = pd.read_csv(goldstandard_path)
+    goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].astype('str')
+    goldstandard_df = goldstandard_df[goldstandard_df["PATIENT"] == patient_id]
+    goldstandard_df = submission_df.loc[:, [
+        "TCR_BINDING_BY_FLOW_II", "HLA_ALLELE", "ALT_EPI_SEQ"]]
+    combined_df = pd.merge(submission_df, goldstandard_df, how='right')
+    combined_df = combined_df.sort_values(by='RANK')
+    if combined_df.shape[0] == 0:
+        return(0.0)
+    else:
+        #scoring function Here
+        pass
+    return(0.0)
 
 
+config_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+goldstandard_path = config_dir + "/validation.csv"
 evaluation_queues = [
+    # training
     {
-        'id':9614007,
-        'validation_func':TESLA_val.validate_files,
-        'scoring_func': get_auprc
+        'id': 9614042,
+        'validation_func': TESLA_val.validate_files,
+        'scoring_func': get_auprc,
+        'goldstandard_path': goldstandard_path
+    },
+    # testing
+    {
+        'id': 9614043,
+        'validation_func': TESLA_val.validate_files,
+        'scoring_func': get_auprc,
+        'goldstandard_path': goldstandard_path
+    },
+    # validation
+    {
+        'id': 9614044,
+        'validation_func': TESLA_val.validate_files,
+        'scoring_func': get_auprc,
+        'goldstandard_path': goldstandard_path
     }
 ]
 evaluation_queue_by_id = {q['id']:q for q in evaluation_queues}
@@ -62,9 +97,7 @@ LEADERBOARD_COLUMNS = [
 leaderboard_columns = {}
 for q in evaluation_queues:
     leaderboard_columns[q['id']] = LEADERBOARD_COLUMNS + [
-        dict(name='score',         display_name='Score',   columnType='DOUBLE'),
-        dict(name='rmse',          display_name='RMSE',    columnType='DOUBLE'),
-        dict(name='auc',           display_name='AUC',     columnType='DOUBLE')]
+        dict(name='score',         display_name='Score',   columnType='DOUBLE')]
 
 ## map each evaluation queues to the synapse ID of a table object
 ## where the table holds a leaderboard for that question
@@ -144,4 +177,4 @@ def score_submission(evaluation, submission):
     config = evaluation_queue_by_id[int(evaluation.id)]
     score = config['scoring_func'](submission, config['goldstandard_path'])
     #Make sure to round results to 3 or 4 digits
-    return (dict(auprc=round(score[0], 4)), "You did fine!")
+    return (dict(auprc=round(score, 4)), "You did fine!")
