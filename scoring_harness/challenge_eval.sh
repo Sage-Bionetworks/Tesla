@@ -10,4 +10,5 @@ python challenge.py -u thomas.yu --send-messages --notifications --acknowledge-r
 #--------------------
 #Score submissions
 #--------------------
-python challenge.py -u thomas.yu --send-messages --notifications score --all >> log/score.log 2>&1
+python challenge.py -u thomas.yu --send-messages --notifications score 9614043 >> log/score.log 2>&1
+python challenge.py -u thomas.yu --send-messages --notifications score 9614044 >> log/score.log 2>&1
