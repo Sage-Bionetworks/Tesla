@@ -5,10 +5,10 @@ cd ~/Tesla/scoring_harness
 #Validate submissions
 #---------------------
 #Remove --send-messages to do rescoring without sending emails to participants
-python challenge.py -u thomas.yu --send-messages --notifications --acknowledge-receipt validate --all >> ~/log/score.log 2>&1
+python3 challenge.py --send-messages --notifications --acknowledge-receipt validate --all >> ~/log/score.log 2>&1
 
 #--------------------
 #Score submissions
 #--------------------
-python challenge.py -u thomas.yu --send-messages --notifications score 9614043 >> log/score.log 2>&1
-python challenge.py -u thomas.yu --send-messages --notifications score 9614044 >> log/score.log 2>&1
+python3 challenge.py --send-messages --notifications score 9614043 >> ~/log/score.log 2>&1
+python3 challenge.py --send-messages --notifications score 9614044 >> ~/log/score.log 2>&1
