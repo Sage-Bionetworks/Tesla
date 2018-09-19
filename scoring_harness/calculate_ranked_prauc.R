@@ -3,12 +3,22 @@ suppressPackageStartupMessages(library(dplyr))
 
 
 calculate_ranked_AUPRC <- function(rank, actual){
-    df <- dplyr::data_frame(
-        "rank" = rank,
-        "actual" = actual)
-    df <- calculate_precision_and_recall(df)
-    lst <- list("lst" = list("precision" = df$precision, "recall" = df$recall))
-    return(PerfMeas::AUPRC(lst))
+    df <- 
+        dplyr::data_frame(
+            "rank" = rank,
+            "actual" = actual) %>% 
+        calculate_precision_and_recall()
+    n_points <- df %>% 
+        dplyr::select(precision, recall) %>% 
+        dplyr::distinct() %>% 
+        nrow
+    if(n_points == 1){
+        score <- sum(df$true_positive) / sum(df$actual)
+    } else {
+        lst <- list("lst" = list("precision" = df$precision, "recall" = df$recall))
+        score <- PerfMeas::AUPRC(lst)
+    }
+    return(score)
 }
 
 calculate_precision_and_recall <- function(df){
