@@ -64,6 +64,7 @@ def get_auprc(submission, goldstandard_path):
     AUPRC = calculate_ranked_AUPRC(
         robjects.FloatVector(combined_df["RANK"]),
         robjects.FloatVector(combined_df["TCR_BINDING_BY_FLOW_II"]))
+    AUPRC = AUPRC[0]
     return(AUPRC)
 
 
