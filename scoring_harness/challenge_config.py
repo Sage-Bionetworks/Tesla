@@ -11,6 +11,7 @@ import sys
 import re
 import operator
 import pandas as pd
+import rpy2.robjects as robjects
 #Python3 does not support reduce
 try:
     reduce
@@ -25,8 +26,10 @@ CHALLENGE_NAME = "TESLA_consortium"
 
 ## Synapse user IDs of the challenge admins who will be notified by email
 ## about errors in the scoring script
-ADMIN_USER_IDS = [3324230]
+ADMIN_USER_IDS = [3360851]
 
+
+CONFIG_DIR = os.path.dirname(os.path.realpath(sys.argv[0]))
 
 def get_auprc(submission, goldstandard_path):
     submission_name = submission.entity.name
@@ -36,26 +39,35 @@ def get_auprc(submission, goldstandard_path):
     for name in zfile.namelist():
         zfile.extract(name, dirname)
     submission_path = os.path.join(dirname, 'TESLA_OUT_1.csv')
+    r_script_path = CONFIG_DIR + "/calculate_ranked_prauc.R"
+    robjects.r("source('%s')" % r_script_path)
+    calculate_ranked_AUPRC = robjects.r('calculate_ranked_AUPRC')
     submission_df = pd.read_csv(submission_path)
     submission_df = submission_df.loc[:, ["RANK", "HLA_ALLELE", "ALT_EPI_SEQ"]]
     submission_df = submission_df.dropna()
     goldstandard_df = pd.read_csv(goldstandard_path)
     goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].astype('str')
+    goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].str.strip("x")
     goldstandard_df = goldstandard_df[goldstandard_df["PATIENT"] == patient_id]
-    goldstandard_df = submission_df.loc[:, [
-        "TCR_BINDING_BY_FLOW_II", "HLA_ALLELE", "ALT_EPI_SEQ"]]
+    goldstandard_df = goldstandard_df.loc[:, ["TCR_BINDING_BY_FLOW_II",
+                                              "HLA_ALLELE",
+                                              "ALT_EPI_SEQ"]]
     combined_df = pd.merge(submission_df, goldstandard_df, how='right')
     combined_df = combined_df.sort_values(by='RANK')
+    combined_df = combined_df.loc[:, ["RANK", "TCR_BINDING_BY_FLOW_II"]]
     if combined_df.shape[0] == 0:
         return(0.0)
-    else:
-        #scoring function Here
-        pass
-    return(0.0)
+    mask1 = combined_df["TCR_BINDING_BY_FLOW_II"] == "+"
+    mask0 = combined_df["TCR_BINDING_BY_FLOW_II"] == "-"
+    combined_df.loc[mask1, "TCR_BINDING_BY_FLOW_II"] = 1
+    combined_df.loc[mask0, "TCR_BINDING_BY_FLOW_II"] = 0
+    AUPRC = calculate_ranked_AUPRC(
+        robjects.FloatVector(combined_df["RANK"]),
+        robjects.FloatVector(combined_df["TCR_BINDING_BY_FLOW_II"]))
+    return(AUPRC)
 
 
-config_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
-goldstandard_path = config_dir + "/validation.csv"
+goldstandard_path = CONFIG_DIR + "/validation.csv"
 evaluation_queues = [
     # training
     {
