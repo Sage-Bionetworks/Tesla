@@ -236,13 +236,19 @@ def validate(evaluation, canCancel, dry_run=False):
             #UPDATE ROUND NUMBER
             addAnnots.update({"FAILURE_REASON":'',
                               "submissionName":submission.entity.name, "round":'2'})
+        print("6")
+        print(str(ex1))
         uniqueId = randomString()
         addAnnots.update({"uniqueId":uniqueId})
         add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=False)
         status = update_single_submission_status(status, add_annotations)
+        print("7")
+        print(str(ex1))
 
         if not dry_run:
             status = syn.store(status)
+        print("8")
+        print(str(ex1))
         ## send message AFTER storing status to ensure we don't get repeat messages
         profile = syn.getUserProfile(submission.userId)
         if is_valid:
@@ -253,11 +259,7 @@ def validate(evaluation, canCancel, dry_run=False):
                 submission_id=uniqueId,
                 submission_name=submission.name)
         else:
-            print("6")
-            print(str(ex1))
             if isinstance(ex1, AssertionError):
-                print("7")
-                print(str(ex1))
                 sendTo = [submission.userId]
                 username = get_user_name(profile)
             else:
