@@ -196,16 +196,12 @@ def validate(evaluation, canCancel, dry_run=False):
     patientIds = set(metadata['patientId'][~metadata['patientId'].isnull()].apply(int))
     #Must declare ex1 variable as it is used later
     ex1=None
-    print("1")
-    print(str(ex1))
     for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
 
         ## refetch the submission so that we get the file path
         ## to be later replaced by a "downloadFiles" flag on getSubmissionBundles
         submission = syn.getSubmission(submission,downloadFile=False)
         ex1 = None #Must define ex1 in case there is no error
-        print("2")
-        print(str(ex1))
         print("validating", submission.id, submission.name)
         addAnnots = {}
         try:
@@ -215,49 +211,29 @@ def validate(evaluation, canCancel, dry_run=False):
             is_valid, validation_message, patientAnnot = conf.validate_submission(syn, evaluation, submission, patientIds, HLA)
             addAnnots.update(patientAnnot)
         except Exception as ex2:
-            print("3")
-            print(str(ex1))
             is_valid = False
             print("Exception during validation:", type(ex1), ex1)
-            print("4")
-            print(str(ex1))
             traceback.print_exc()
             validation_message = str(ex2)
             ex1 = ex2
-            print("5")
-            print(str(ex1))
 
-        print("6")
-        print(str(ex1))
         status.status = "VALIDATED" if is_valid else "INVALID"
-        print("7")
-        print(str(ex1))
         if canCancel:
             status.canCancel = True
-        print("8")
-        print(str(ex1))
         if not is_valid:
             #UPDATE ROUND NUMBER
             addAnnots.update({"FAILURE_REASON":validation_message[0:1000], "round":'2'})
-            print("9")
-            print(str(ex1))
         else:
             #UPDATE ROUND NUMBER
             addAnnots.update({"FAILURE_REASON":'',
                               "submissionName":submission.entity.name, "round":'2'})
-        print("10")
-        print(str(ex1))
         uniqueId = randomString()
         addAnnots.update({"uniqueId":uniqueId})
         add_annotations = synapseclient.annotations.to_submission_status_annotations(addAnnots,is_private=False)
         status = update_single_submission_status(status, add_annotations)
-        print("7")
-        print(str(ex1))
 
         if not dry_run:
             status = syn.store(status)
-        print("8")
-        print(str(ex1))
         ## send message AFTER storing status to ensure we don't get repeat messages
         profile = syn.getUserProfile(submission.userId)
         if is_valid:
