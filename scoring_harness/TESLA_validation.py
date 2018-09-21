@@ -412,7 +412,7 @@ def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i or "TESLA_VCF" in i]
 	order = pd.np.argsort(onlyTesla)
 	if useOptional:
-		patientFiles = syn.tableQuery("SELECT * FROM syn8292741 where patientId = '%s' and fileFormat = 'vcf'" % patientId)
+		patientFiles = syn.tableQuery("SELECT * FROM syn16805178 where patientId = '%s' and fileFormat = 'vcf'" % patientId)
 		patientFilesDf = patientFiles.asDataFrame()
 		patientVCFEnt = syn.get(patientFilesDf['id'][0])
 		patientVCFDf = pd.read_csv(patientVCFEnt.path,sep="\t",comment="#",header=None)
@@ -436,7 +436,7 @@ def perform_validate(args):
 	syn = synapse_login()
 	#metadataPath = syn.get("syn8371011").path
 	#metadata = pd.read_csv(metadataPath)
-	metadataTable = syn.tableQuery('SELECT * FROM syn8292741')
+	metadataTable = syn.tableQuery('SELECT * FROM syn16805178')
 	metadata = metadataTable.asDataFrame()
 	HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
 	HLA.drop_duplicates("classIHLAalleles",inplace=True)
