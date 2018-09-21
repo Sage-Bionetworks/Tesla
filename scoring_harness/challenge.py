@@ -214,7 +214,7 @@ def validate(evaluation, canCancel, dry_run=False):
             status = update_single_submission_status(status, add_annotations)
             is_valid, validation_message, patientAnnot = conf.validate_submission(syn, evaluation, submission, patientIds, HLA)
             addAnnots.update(patientAnnot)
-        except Exception as ex1:
+        except Exception as ex2:
             print("3")
             print(str(ex1))
             is_valid = False
@@ -222,21 +222,30 @@ def validate(evaluation, canCancel, dry_run=False):
             print("4")
             print(str(ex1))
             traceback.print_exc()
-            validation_message = str(ex1)
+            validation_message = str(ex2)
+            ex1 = ex2
             print("5")
             print(str(ex1))
 
+        print("6")
+        print(str(ex1))
         status.status = "VALIDATED" if is_valid else "INVALID"
+        print("7")
+        print(str(ex1))
         if canCancel:
             status.canCancel = True
+        print("8")
+        print(str(ex1))
         if not is_valid:
             #UPDATE ROUND NUMBER
             addAnnots.update({"FAILURE_REASON":validation_message[0:1000], "round":'2'})
+        print("9")
+        print(str(ex1))
         else:
             #UPDATE ROUND NUMBER
             addAnnots.update({"FAILURE_REASON":'',
                               "submissionName":submission.entity.name, "round":'2'})
-        print("6")
+        print("10")
         print(str(ex1))
         uniqueId = randomString()
         addAnnots.update({"uniqueId":uniqueId})
