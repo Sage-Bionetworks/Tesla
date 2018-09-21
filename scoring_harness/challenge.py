@@ -10,7 +10,7 @@
 #   syn.login(<username>, <password>, rememberMe=True)
 #
 # Your credentials will be saved after which you may run this script with no credentials.
-# 
+#
 # Author: chris.bare
 #
 ###############################################################################
@@ -196,12 +196,16 @@ def validate(evaluation, canCancel, dry_run=False):
     patientIds = set(metadata['patientId'][~metadata['patientId'].isnull()].apply(int))
     #Must declare ex1 variable as it is used later
     ex1=None
+    print("1")
+    print(str(ex1))
     for submission, status in syn.getSubmissionBundles(evaluation, status='RECEIVED'):
 
         ## refetch the submission so that we get the file path
         ## to be later replaced by a "downloadFiles" flag on getSubmissionBundles
         submission = syn.getSubmission(submission,downloadFile=False)
         ex1 = None #Must define ex1 in case there is no error
+        print("2")
+        print(str(ex1))
         print("validating", submission.id, submission.name)
         addAnnots = {}
         try:
@@ -211,10 +215,16 @@ def validate(evaluation, canCancel, dry_run=False):
             is_valid, validation_message, patientAnnot = conf.validate_submission(syn, evaluation, submission, patientIds, HLA)
             addAnnots.update(patientAnnot)
         except Exception as ex1:
+            print("3")
+            print(str(ex1))
             is_valid = False
             print("Exception during validation:", type(ex1), ex1)
+            print("4")
+            print(str(ex1))
             traceback.print_exc()
             validation_message = str(ex1)
+            print("5")
+            print(str(ex1))
 
         status.status = "VALIDATED" if is_valid else "INVALID"
         if canCancel:
@@ -243,7 +253,11 @@ def validate(evaluation, canCancel, dry_run=False):
                 submission_id=uniqueId,
                 submission_name=submission.name)
         else:
+            print("6")
+            print(str(ex1))
             if isinstance(ex1, AssertionError):
+                print("7")
+                print(str(ex1))
                 sendTo = [submission.userId]
                 username = get_user_name(profile)
             else:
@@ -712,4 +726,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
