@@ -295,7 +295,7 @@ def score(evaluation, canCancel, dry_run=False):
                 score['team'] = get_user_name(profile)
             else:
                 score['team'] = '?'
-            add_annotations = synapseclient.annotations.to_submission_status_annotations(score,is_private=True)
+            add_annotations = synapseclient.annotations.to_submission_status_annotations(score,is_private=False)
             status = update_single_submission_status(status, add_annotations)
 
             status.status = "SCORED"
