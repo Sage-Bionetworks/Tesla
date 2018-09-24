@@ -1,2 +1,2 @@
 RANK,ALT_EPI_SEQ,HLA_ALLELE,VAR_ID,REF_EPI_SEQ,PEP_LEN,PROT_POS,HLA_ALLELE_MUT,HLA_ALT_BINDING,HLA_REF_BINDING,RANK_METRICS,RANK_DESC,ADDN_INFO,SCORE,REF_ALLELE_EXP,ALT_ALLELE_EXP
-1,RMPGDRPTL,C*07:01( d ),1_6208949_G_T,GTPTAVGWG,9,219;3,,363.86,100.01,alt_binding:363.86;binding_diff:263.85,alt epitope amino acid sequence looks nice,this epitope is the best,2.3,3.4,2.3
+1,RMPGDRPTL,A*25:01,1_6208949_G_T,GTPTAVGWG,9,219;3,,363.86,100.01,alt_binding:363.86;binding_diff:263.85,alt epitope amino acid sequence looks nice,this epitope is the best,2.3,3.4,2.3
