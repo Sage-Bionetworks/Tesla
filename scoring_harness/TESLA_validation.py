@@ -40,8 +40,6 @@ def synapse_login():
 		syn = synapseclient.login(email=Username, password=Password,rememberMe=True)
 	return syn
 
-def configureHLA(i):
-	return(str(i).replace("*","").split("(")[0].replace("HLA-",''))
 
 def checkType(submission, cols, colType, fileName, optional=False,vcf=False):
 	for col in cols:
@@ -110,7 +108,7 @@ def validate_1_2(submission_filepath, validHLA):
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "%s: Length of REF_EPI_SEQ values must be equal to the PEP_LEN" % basename
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "%s: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN" % basename
-	assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "%s: HLA_ALLELE must be part of this list for this patient: %s" % (basename,", ".join(validHLA))
+	assert all(submission['HLA_ALLELE'].apply(lambda x: x in validHLA)), "%s: HLA_ALLELE must be part of this list for this patient: %s" % (basename,", ".join(validHLA))
 	return(True,"Passed Validation!")
 
 def validate_3_4(submission_filepath, validHLA):
@@ -145,7 +143,7 @@ def validate_3_4(submission_filepath, validHLA):
 
 		assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "%s: Length of REF_EPI_SEQ values must be equal to the PEP_LEN" % basename
 		assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "%s: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN" % basename
-		assert all(submission['HLA_ALLELE'].apply(lambda x: configureHLA(x) in validHLA)), "%s: HLA_ALLELE must be part of this list for this patient: %s" % (basename,", ".join(validHLA))
+		assert all(submission['HLA_ALLELE'].apply(lambda x: x in validHLA)), "%s: HLA_ALLELE must be part of this list for this patient: %s" % (basename,", ".join(validHLA))
 	return(True,"Passed Validation!")
 
 def turnInt(i):
@@ -411,31 +409,12 @@ def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 			validation_func[os.path.basename(filepath)](filepath)
 	onlyTesla = [i for i in filelist if "TESLA_OUT_" in i or "TESLA_VCF" in i]
 	order = pd.np.argsort(onlyTesla)
-	if useOptional:
-		patientFiles = syn.tableQuery("SELECT * FROM syn16805178 where patientId = '%s' and fileFormat = 'vcf'" % patientId)
-		patientFilesDf = patientFiles.asDataFrame()
-		patientVCFEnt = syn.get(patientFilesDf['id'][0])
-		patientVCFDf = pd.read_csv(patientVCFEnt.path,sep="\t",comment="#",header=None)
-		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf and TESLA_OUT_{2,4}.csv maps to ID in %s" % patientVCFEnt.name)
-		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[2]],onlyTesla[order[4]],submission2_filepath=onlyTesla[order[1]],submission4_filepath=onlyTesla[order[3]],patientVCFDf=patientVCFDf)
-	else:
-		print("VALIDATING THAT VARID EXISTS IN TESLA_OUT_{1,3}.csv and maps to ID in TESLA_VCF.vcf")
-		validate_VAR_ID(onlyTesla[order[0]],onlyTesla[order[1]],onlyTesla[order[2]])
-
-	# if useOptional:
-	# 	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,4,5}.csv")
-	# 	validate_STEP_ID(onlyTesla[order[2]],onlyTesla[order[4]],submission4_filepath=onlyTesla[order[3]])
-	# else:
-	# 	print("VALIDATING THAT STEPID EXISTS IN TESLA_OUT_{3,5}.csv")
-	# 	validate_STEP_ID(onlyTesla[order[1]],onlyTesla[order[2]])
 
 	return(True, useOptional, "Passed Validation!")
 
 
 def perform_validate(args):
 	syn = synapse_login()
-	#metadataPath = syn.get("syn8371011").path
-	#metadata = pd.read_csv(metadataPath)
 	metadataTable = syn.tableQuery('SELECT * FROM syn16805178')
 	metadata = metadataTable.asDataFrame()
 	HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
@@ -443,11 +422,12 @@ def perform_validate(args):
 	patientIds = set(metadata['patientId'][~metadata['patientId'].isnull()].apply(int))
 	assert args.patientId in patientIds, "Patient Id must be in the metadata"
 	listHLA = HLA['classIHLAalleles'][HLA['patientId'] == args.patientId]
-	validHLA = [i.replace("*","").split(";") for i in listHLA]
+	validHLA = [i.split(",") for i in listHLA]
 	final_validHLA = []
 	for i in validHLA:
 		final_validHLA.extend(i)
 	final_validHLA = set([i.split("(")[0] for i in final_validHLA])
+	print(final_validHLA)
 	validate_files(syn, args.file, args.patientId, final_validHLA, validatingBAM=args.validatingBAM)
 	print("Passed Validation")
 
