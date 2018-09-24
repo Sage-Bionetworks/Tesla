@@ -169,7 +169,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
     if os.path.exists(tesla_ranking):
         filelist.append(tesla_ranking)
     listHLA = HLA['classIHLAalleles'][HLA['patientId'] == int(patientId)]
-    validHLA = [i.replace("*","").split(";") for i in listHLA]
+    validHLA = [i.split(";") for i in listHLA]
     validHLA = reduce(operator.add, validHLA)
     validHLA = set([i.split("(")[0] for i in validHLA])
     validated, hasVCF, message = TESLA_val.validate_files(syn, filelist,patientId,validHLA,validatingBAM=False)
