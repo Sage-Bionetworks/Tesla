@@ -152,7 +152,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
         " not allowed in submission queue: " +
         str(evaluation.id) +
         ". Only patients: " +
-        ", ".join(allowed_patients)
+        ", ".join(allowed_patients) +
         " are allowed.")
     hasVCF = False
     #if submissionName.endswith(".zip"):
