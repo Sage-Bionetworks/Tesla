@@ -26,8 +26,7 @@ calculate_ranked_AUPRC <- function(rank, actual){
 calculate_precision_and_recall <- function(df){
     df %>% 
         dplyr::arrange(rank) %>% 
-        dplyr::mutate(predicted = ifelse(is.na(rank), 0, 1)) %>% 
-        dplyr::mutate(predicted = ifelse(is.nan(rank), 0, 1)) %>% 
+        dplyr::mutate(predicted = ifelse((is.na(rank) | is.nan(rank)), 0, 1)) %>%
         dplyr::mutate(true_positive = 
                           ifelse((actual == 1 & predicted == 1), 1, 0)) %>% 
         dplyr::mutate(false_positive = 
