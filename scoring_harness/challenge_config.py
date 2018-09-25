@@ -86,7 +86,7 @@ evaluation_queues = [
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
         'goldstandard_path': testing_goldstandard_path,
-        'patients': []
+        'patients': ["4", "11", "12"]
     },
     # validation
     {
@@ -94,7 +94,7 @@ evaluation_queues = [
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
         'goldstandard_path': validation_goldstandard_path,
-        'patients': []
+        'patients': ["5", "7", "8", "9"]
     }
 ]
 evaluation_queue_by_id = {q['id']:q for q in evaluation_queues}
@@ -147,12 +147,13 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
     assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
     assert submissionName.endswith(".zip"), "Must submit a zip file"
     assert patientId in allowed_patients, (
+        "Patient: " +
         str(patientId) +
         " not allowed in submission queue: " +
         str(evaluation.id) +
         ". Only patients: " +
         ", ".join(allowed_patients)
-        )
+        " are allowed.")
     hasVCF = False
     #if submissionName.endswith(".zip"):
     assert submissionName == "%s.zip" % patientId, "Zip file must be named patientId.zip"
