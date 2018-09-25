@@ -8,10 +8,12 @@ calculate_ranked_AUPRC <- function(rank, actual){
             "rank" = rank,
             "actual" = actual) %>% 
         calculate_precision_and_recall()
+    print(df)
     n_points <- df %>% 
         dplyr::select(precision, recall) %>% 
         dplyr::distinct() %>% 
         nrow
+    print(n_points)
     if(n_points == 1){
         score <- sum(df$true_positive) / sum(df$actual)
     } else {

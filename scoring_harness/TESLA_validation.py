@@ -86,7 +86,6 @@ def validate_1_2(submission_filepath, validHLA):
 	"""
 	#VAR_ID have to check out with first file
 	print("VALIDATING %s" % submission_filepath)
-	print(validHLA)
 	basename = os.path.basename(submission_filepath)
 	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO","SCORE",'REF_ALLELE_EXP','ALT_ALLELE_EXP'])
 
