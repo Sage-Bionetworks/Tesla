@@ -68,28 +68,33 @@ def get_auprc(submission, goldstandard_path):
     return(AUPRC)
 
 
-goldstandard_path = CONFIG_DIR + "/validation.csv"
+training_goldstandard_path = CONFIG_DIR + "/training_goldstandard.csv"
+testing_goldstandard_path = CONFIG_DIR + "/testing_goldstandard.csv"
+validation_goldstandard_path = CONFIG_DIR + "/validation_goldstandard.csv"
 evaluation_queues = [
     # training
     {
         'id': 9614042,
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
-        'goldstandard_path': goldstandard_path
+        'goldstandard_path': training_goldstandard_path,
+        'patients': ["1", "2", "10"]
     },
     # testing
     {
         'id': 9614043,
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
-        'goldstandard_path': goldstandard_path
+        'goldstandard_path': testing_goldstandard_path,
+        'patients': []
     },
     # validation
     {
         'id': 9614044,
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
-        'goldstandard_path': goldstandard_path
+        'goldstandard_path': validation_goldstandard_path,
+        'patients': []
     }
 ]
 evaluation_queue_by_id = {q['id']:q for q in evaluation_queues}
@@ -135,11 +140,20 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
     if not submission.entity.name.endswith("bam"):
         submission = syn.getSubmission(submission.id)
 
-    patientId = re.sub("(\d+).+","\\1",submissionName)
+    config = evaluation_queue_by_id[int(evaluation.id)]
+    allowed_patients = config['patients']
+    patientId = re.sub("(\d+).+", "\\1", submissionName)
     assert patientId.isdigit(), "Wrong filenaming convention"
     assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
-    assert submissionName.endswith(".zip"),"Must submit a zip file"
-    hasVCF=False
+    assert submissionName.endswith(".zip"), "Must submit a zip file"
+    assert patientId in allowed_patients, (
+        str(patientId) +
+        " not allowed in submission queue: " +
+        str(evaluation.id) +
+        ". Only patients: " +
+        ", ".join(allowed_patients)
+        )
+    hasVCF = False
     #if submissionName.endswith(".zip"):
     assert submissionName == "%s.zip" % patientId, "Zip file must be named patientId.zip"
     #Unzip files here
@@ -147,15 +161,13 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
     try:
         zfile = zipfile.ZipFile(submission.filePath)
     except zipfile.BadZipfile as e:
-        raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv, TESLA_OUT_2.csv, TESLA_OUT_3.csv, TESLA_OUT_4.csv, TESLA_YAML.yaml and TESLA_VCF.vcf")
+        raise AssertionError("Must submit a zipped file containing TESLA_OUT_1.csv,TESLA_OUT_3.csv, TESLA_YAML.yaml and TESLA_VCF.vcf")
 
     for name in zfile.namelist():
       zfile.extract(name, dirname)
 
     tesla_out_1 = os.path.join(dirname,'TESLA_OUT_1.csv')
-    tesla_out_2 = os.path.join(dirname,'TESLA_OUT_2.csv')
     tesla_out_3 = os.path.join(dirname,'TESLA_OUT_3.csv')
-    tesla_out_4 = os.path.join(dirname,'TESLA_OUT_4.csv')
     tesla_yaml = os.path.join(dirname,'TESLA_YAML.yaml')
     tesla_ranking = os.path.join(dirname, 'TESLA_ranking_method.txt')
     tesla_vcf = os.path.join(dirname,'TESLA_VCF.vcf')
