@@ -168,7 +168,9 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
       zfile.extract(name, dirname)
 
     tesla_out_1 = os.path.join(dirname,'TESLA_OUT_1.csv')
+    tesla_out_2 = os.path.join(dirname,'TESLA_OUT_2.csv')
     tesla_out_3 = os.path.join(dirname,'TESLA_OUT_3.csv')
+    tesla_out_4 = os.path.join(dirname,'TESLA_OUT_4.csv')
     tesla_yaml = os.path.join(dirname,'TESLA_YAML.yaml')
     tesla_ranking = os.path.join(dirname, 'TESLA_ranking_method.txt')
     tesla_vcf = os.path.join(dirname,'TESLA_VCF.vcf')
