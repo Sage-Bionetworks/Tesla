@@ -177,7 +177,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
     filelist = [tesla_out_1,tesla_out_3,tesla_yaml,tesla_vcf]
     optionalFiles = [tesla_out_2,tesla_out_4]
     optionalExists = all([os.path.exists(i) for i in optionalFiles])
-    assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_3.csv, TESLA_OUT_5.csv, and TESLA_YAML.yaml must all be in the zipped file.  Please do NOT put your files in a folder prior to zipping them."
+    assert all([os.path.exists(i) for i in filelist]), "TESLA_OUT_1.csv, TESLA_OUT_3.csv, TESLA_VCF.vcf, and TESLA_YAML.yaml must all be in the zipped file.  Please do NOT put your files in a folder prior to zipping them."
     assert optionalExists or sum([os.path.exists(i) for i in optionalFiles]) == 0, "TESLA_OUT_2.csv, TESLA_OUT_4.csv.  Both files MUST either be present or missing.  If missing, you are missing predictions from VCF. If this is not as intended, please submit again."
     if optionalExists:
         filelist.extend(optionalFiles)
