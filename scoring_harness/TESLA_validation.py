@@ -90,6 +90,7 @@ def validate_1_2(submission_filepath, validHLA):
 	required_cols = pd.Series(["RANK","VAR_ID","PROT_POS","HLA_ALLELE","HLA_ALLELE_MUT","HLA_ALT_BINDING","HLA_REF_BINDING","PEP_LEN","ALT_EPI_SEQ","REF_EPI_SEQ","RANK_METRICS","RANK_DESC","ADDN_INFO","SCORE",'REF_ALLELE_EXP','ALT_ALLELE_EXP'])
 
 	submission = pd.read_csv(submission_filepath,na_values="n/a")
+	assert submission.shape[0] > 0, ("%s is empty" % submission_filepath)
 	#CHECK: Required headers must exist in submission
 	assert all(required_cols.isin(submission.columns)), "%s: These column headers are missing: %s" % (basename,", ".join(required_cols[~required_cols.isin(submission.columns)]))
 	submission['VAR_ID'] = submission['VAR_ID'].astype(str)
@@ -110,6 +111,7 @@ def validate_1_2(submission_filepath, validHLA):
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "%s: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN" % basename
 	assert all(submission['HLA_ALLELE'].apply(lambda x: x in validHLA)), "%s: HLA_ALLELE must be part of this list for this patient: %s" % (basename,", ".join(validHLA))
 	return(True,"Passed Validation!")
+
 
 def validate_3_4(submission_filepath, validHLA):
 	"""
