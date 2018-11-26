@@ -60,6 +60,8 @@ def get_auprc(submission, goldstandard_path):
     mask0 = combined_df["STATUS"] == "-"
     combined_df.loc[mask1, "STATUS"] = 1
     combined_df.loc[mask0, "STATUS"] = 0
+    print(combined_df["RANK"])
+    print(combined_df["STATUS"])
     AUPRC = calculate_ranked_AUPRC(
         robjects.FloatVector(combined_df["RANK"]),
         robjects.FloatVector(combined_df["STATUS"]))
