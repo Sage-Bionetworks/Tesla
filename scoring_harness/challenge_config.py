@@ -47,23 +47,22 @@ def get_auprc(submission, goldstandard_path):
     submission_df = submission_df.dropna()
     goldstandard_df = pd.read_csv(goldstandard_path)
     goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].astype('str')
-    goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].str.strip("x")
     goldstandard_df = goldstandard_df[goldstandard_df["PATIENT"] == patient_id]
-    goldstandard_df = goldstandard_df.loc[:, ["TCR_BINDING_BY_FLOW_II",
+    goldstandard_df = goldstandard_df.loc[:, ["STATUS",
                                               "HLA_ALLELE",
                                               "ALT_EPI_SEQ"]]
     combined_df = pd.merge(submission_df, goldstandard_df, how='right')
     combined_df = combined_df.sort_values(by='RANK')
-    combined_df = combined_df.loc[:, ["RANK", "TCR_BINDING_BY_FLOW_II"]]
+    combined_df = combined_df.loc[:, ["RANK", "STATUS"]]
     if combined_df.shape[0] == 0:
         return(0.0)
-    mask1 = combined_df["TCR_BINDING_BY_FLOW_II"] == "+"
-    mask0 = combined_df["TCR_BINDING_BY_FLOW_II"] == "-"
-    combined_df.loc[mask1, "TCR_BINDING_BY_FLOW_II"] = 1
-    combined_df.loc[mask0, "TCR_BINDING_BY_FLOW_II"] = 0
+    mask1 = combined_df["STATUS"] == "+"
+    mask0 = combined_df["STATUS"] == "-"
+    combined_df.loc[mask1, "STATUS"] = 1
+    combined_df.loc[mask0, "STATUS"] = 0
     AUPRC = calculate_ranked_AUPRC(
         robjects.FloatVector(combined_df["RANK"]),
-        robjects.FloatVector(combined_df["TCR_BINDING_BY_FLOW_II"]))
+        robjects.FloatVector(combined_df["STATUS"]))
     AUPRC = AUPRC[0]
     return(AUPRC)
 
