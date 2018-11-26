@@ -149,6 +149,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
     config = evaluation_queue_by_id[int(evaluation.id)]
     allowed_patients = config['patients']
     patientId = re.sub("(\d+).+", "\\1", submissionName)
+    print(patientIds)
     assert patientId.isdigit(), "Wrong filenaming convention"
     assert int(patientId) in patientIds, "Patient Id must be part of the Id list"
     assert submissionName.endswith(".zip"), "Must submit a zip file"
