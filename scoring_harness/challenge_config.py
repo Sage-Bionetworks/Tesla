@@ -43,9 +43,11 @@ def get_auprc(submission, goldstandard_path):
     robjects.r("source('%s')" % r_script_path)
     calculate_ranked_AUPRC = robjects.r('calculate_ranked_AUPRC')
     submission_df = pd.read_csv(submission_path)
+    print(submission_df)
     submission_df = submission_df.loc[:, ["RANK", "HLA_ALLELE", "ALT_EPI_SEQ"]]
     submission_df = submission_df.dropna()
     goldstandard_df = pd.read_csv(goldstandard_path)
+    print(goldstandard_df)
     goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].astype('str')
     goldstandard_df = goldstandard_df[goldstandard_df["PATIENT"] == patient_id]
     goldstandard_df = goldstandard_df.loc[:, ["STATUS",
@@ -54,7 +56,6 @@ def get_auprc(submission, goldstandard_path):
     combined_df = pd.merge(submission_df, goldstandard_df, how='right')
     combined_df = combined_df.sort_values(by='RANK')
     combined_df = combined_df.loc[:, ["RANK", "STATUS"]]
-    print(combined_df)
     if combined_df.shape[0] == 0:
         return(0.0)
     mask1 = combined_df["STATUS"] == "+"
