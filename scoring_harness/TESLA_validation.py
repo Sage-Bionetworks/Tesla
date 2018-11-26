@@ -417,7 +417,7 @@ def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 
 def perform_validate(args):
 	syn = synapse_login()
-	metadataTable = syn.tableQuery('SELECT * FROM syn16805178')
+	metadataTable = syn.tableQuery('SELECT * FROM syn17063955')
 	metadata = metadataTable.asDataFrame()
 	HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
 	HLA.drop_duplicates("classIHLAalleles",inplace=True)
