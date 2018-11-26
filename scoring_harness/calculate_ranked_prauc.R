@@ -3,6 +3,9 @@ suppressPackageStartupMessages(library(dplyr))
 
 
 calculate_ranked_AUPRC <- function(rank, actual){
+    print("calculating score")
+    print(rank)
+    print(actual)
     df <- 
         dplyr::data_frame(
             "rank" = rank,
