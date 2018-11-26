@@ -72,29 +72,36 @@ training_goldstandard_path = CONFIG_DIR + "/training_goldstandard.csv"
 testing_goldstandard_path = CONFIG_DIR + "/testing_goldstandard.csv"
 validation_goldstandard_path = CONFIG_DIR + "/validation_goldstandard.csv"
 evaluation_queues = [
-    # training
+    # # training
+    # {
+    #     'id': 9614042,
+    #     'validation_func': TESLA_val.validate_files,
+    #     'scoring_func': get_auprc,
+    #     'goldstandard_path': training_goldstandard_path,
+    #     'patients': ["1", "2", "10"]
+    # },
+    # # testing
+    # {
+    #     'id': 9614043,
+    #     'validation_func': TESLA_val.validate_files,
+    #     'scoring_func': get_auprc,
+    #     'goldstandard_path': testing_goldstandard_path,
+    #     'patients': ["4", "11", "12"]
+    # },
+    # # validation
+    # {
+    #     'id': 9614044,
+    #     'validation_func': TESLA_val.validate_files,
+    #     'scoring_func': get_auprc,
+    #     'goldstandard_path': validation_goldstandard_path,
+    #     'patients': ["5", "7", "8", "9"]
+    # }
     {
-        'id': 9614042,
-        'validation_func': TESLA_val.validate_files,
-        'scoring_func': get_auprc,
-        'goldstandard_path': training_goldstandard_path,
-        'patients': ["1", "2", "10"]
-    },
-    # testing
-    {
-        'id': 9614043,
-        'validation_func': TESLA_val.validate_files,
-        'scoring_func': get_auprc,
-        'goldstandard_path': testing_goldstandard_path,
-        'patients': ["4", "11", "12"]
-    },
-    # validation
-    {
-        'id': 9614044,
+        'id': 9614157,
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
         'goldstandard_path': validation_goldstandard_path,
-        'patients': ["5", "7", "8", "9"]
+        'patients': ["1", "2", "4", "10", "11", "12", "101"]
     }
 ]
 evaluation_queue_by_id = {q['id']:q for q in evaluation_queues}
