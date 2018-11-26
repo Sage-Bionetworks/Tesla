@@ -3,8 +3,8 @@ suppressPackageStartupMessages(library(dplyr))
 
 
 calculate_ranked_AUPRC <- function(rank, actual){
-    cat(rank)
-    cat(actual)
+    print(rank)
+    print(actual)
     if(length(rank) == 0) return(0.0)
     if(length(actual) == 0) return(0.0)
     df <- 

@@ -56,6 +56,7 @@ def get_auprc(submission, goldstandard_path):
     combined_df = pd.merge(submission_df, goldstandard_df, how='right')
     combined_df = combined_df.sort_values(by='RANK')
     combined_df = combined_df.loc[:, ["RANK", "STATUS"]]
+    print(combined_df)
     if combined_df.shape[0] == 0:
         return(0.0)
     mask1 = combined_df["STATUS"] == "+"
