@@ -48,14 +48,14 @@ def get_auprc(submission, goldstandard_path):
     goldstandard_df = pd.read_csv(goldstandard_path)
     goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].astype('str')
     goldstandard_df = goldstandard_df[goldstandard_df["PATIENT"] == patient_id]
-    print(goldstandard_df)
     goldstandard_df = goldstandard_df.loc[:, ["STATUS",
                                               "HLA_ALLELE",
                                               "ALT_EPI_SEQ"]]
+    submission_df["HLA_ALLELE"] = submission_df['HLA_ALLELE'].str.replace('[^\w\s]','')
+    goldstandard_df["HLA_ALLELE"] = goldstandard_df['HLA_ALLELE'].str.replace('[^\w\s]','')                                       
     combined_df = pd.merge(submission_df, goldstandard_df, how='right')
     combined_df = combined_df.sort_values(by='RANK')
     combined_df = combined_df.loc[:, ["RANK", "STATUS"]]
-    print(combined_df)
     if combined_df.shape[0] == 0:
         return(0.0)
     mask1 = combined_df["STATUS"] == "+"
