@@ -48,7 +48,7 @@ def get_auprc(submission, goldstandard_path):
     submission_df = submission_df.dropna()
     goldstandard_df = pd.read_csv(goldstandard_path)
     print(goldstandard_df)
-    goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].astype('str')
+    #goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].astype('str')
     goldstandard_df = goldstandard_df[goldstandard_df["PATIENT"] == patient_id]
     goldstandard_df = goldstandard_df.loc[:, ["STATUS",
                                               "HLA_ALLELE",
