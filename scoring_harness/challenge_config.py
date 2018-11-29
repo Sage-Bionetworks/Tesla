@@ -48,7 +48,7 @@ def get_auprc(submission, goldstandard_path):
     submission_df = submission_df.dropna()
     goldstandard_df = pd.read_csv(goldstandard_path)
     #print(goldstandard_df)
-    print(patientId)
+    print(patient_id)
     print(goldstandard_df["PATIENT"])
     print(goldstandard_df["PATIENT"].astype('str'))
     print(goldstandard_df["PATIENT"].astype('int'))
