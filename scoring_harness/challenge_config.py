@@ -43,17 +43,12 @@ def get_auprc(submission, goldstandard_path):
     robjects.r("source('%s')" % r_script_path)
     calculate_ranked_AUPRC = robjects.r('calculate_ranked_AUPRC')
     submission_df = pd.read_csv(submission_path)
-    #print(submission_df)
     submission_df = submission_df.loc[:, ["RANK", "HLA_ALLELE", "ALT_EPI_SEQ"]]
     submission_df = submission_df.dropna()
     goldstandard_df = pd.read_csv(goldstandard_path)
-    #print(goldstandard_df)
-    print(patient_id)
-    print(goldstandard_df["PATIENT"])
-    print(goldstandard_df["PATIENT"].astype('str'))
-    print(goldstandard_df["PATIENT"].astype('int'))
-    #goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].astype('str')
+    goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].astype('str')
     goldstandard_df = goldstandard_df[goldstandard_df["PATIENT"] == patient_id]
+    print(goldstandard_df)
     goldstandard_df = goldstandard_df.loc[:, ["STATUS",
                                               "HLA_ALLELE",
                                               "ALT_EPI_SEQ"]]
