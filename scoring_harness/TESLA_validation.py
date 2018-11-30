@@ -109,8 +109,6 @@ def validate_1_2(submission_filepath, validHLA):
 
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "%s: Length of REF_EPI_SEQ values must be equal to the PEP_LEN" % basename
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "%s: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN" % basename
-	print(submission['HLA_ALLELE'])
-	print(validHLA)
 	assert all(submission['HLA_ALLELE'].apply(lambda x: x in validHLA)), "%s: HLA_ALLELE must be part of this list for this patient: %s" % (basename,", ".join(validHLA))
 	return(True,"Passed Validation!")
 
@@ -431,7 +429,6 @@ def perform_validate(args):
 	for i in validHLA:
 		final_validHLA.extend(i)
 	final_validHLA = set([i.split("(")[0] for i in final_validHLA])
-	print(final_validHLA)
 	validate_files(syn, args.file, args.patientId, final_validHLA, validatingBAM=args.validatingBAM)
 	print("Passed Validation")
 
