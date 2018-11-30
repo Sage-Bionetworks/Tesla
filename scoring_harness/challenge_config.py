@@ -50,11 +50,10 @@ def get_auprc(submission, goldstandard_path):
     goldstandard_df = goldstandard_df[goldstandard_df["PATIENT"] == patient_id]
     goldstandard_df = goldstandard_df.loc[:, ["STATUS",
                                               "HLA_ALLELE",
-                                              "ALT_EPI_SEQ"]]                                    
+                                              "ALT_EPI_SEQ"]] 
     combined_df = pd.merge(submission_df, goldstandard_df, how='right')
     combined_df = combined_df.sort_values(by='RANK')
     combined_df = combined_df.loc[:, ["RANK", "STATUS"]]
-    print(combined_df)
     if combined_df.shape[0] == 0:
         return(0.0)
     mask1 = combined_df["STATUS"] == "+"
