@@ -3,7 +3,7 @@ suppressPackageStartupMessages(library(dplyr))
 
 
 calculate_ranked_AUPRC <- function(rank, actual){
-    if (length(x[!is.na(x)]) > 0) return(0.0)
+    if (length(rank[!is.na(rank)]) > 0) return(0.0)
     df <- 
         dplyr::data_frame(
             "rank" = rank,
