@@ -87,7 +87,7 @@ evaluation_queues = [
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
         'goldstandard_path': testing_goldstandard_path,
-        'patients': ["4", "11", "12", "101", "212"]
+        'patients': ["4", "5", "7", "11", "12", "101", "212"]
     },
     # validation
     {
@@ -95,7 +95,7 @@ evaluation_queues = [
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
         'goldstandard_path': validation_goldstandard_path,
-        'patients': ["5", "7", "8", "9", "102"]
+        'patients': ["8", "9", "102"]
     },
     
     #test
@@ -104,7 +104,7 @@ evaluation_queues = [
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
         'goldstandard_path': goldstandard_path,
-        'patients': ["1", "2", "4", "10", "11", "12", "101", "102", "103", "212", "210"]
+        'patients': ["1", "2", "4", "5", "7", "8", "9", "10", "11", "12", "101", "102", "103", "212", "210"]
     }
 ]
 evaluation_queue_by_id = {q['id']:q for q in evaluation_queues}
