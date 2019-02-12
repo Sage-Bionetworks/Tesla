@@ -7,6 +7,7 @@ import sys
 import math
 import string
 import getpass
+import io
 try:
 	import synapseclient
 except ImportError:
@@ -157,6 +158,8 @@ def turnInt(i):
 
 
 
+
+
 ### VALIDATING VCF
 def contains_whitespace(x):
 	"""
@@ -183,7 +186,8 @@ def validateVCF(filePath):
 			if i.startswith("#CHROM"):
 				headers = i.replace("\n","").split("\t")
 	if headers is not None:
-		submission = pd.read_csv(filePath, sep="\t",comment="#",header=None,names=headers)
+		#submission = pd.read_csv(filePath, sep="\t",comment="#",header=None,names=headers)
+		submission = read_vcf(filePath)
 	else:
 		raise ValueError("TESLA_VCF.vcf: This file must start with the header #CHROM")
 
@@ -233,6 +237,17 @@ def validateVCF(filePath):
 	result = 'According to the VCF specification, the input file is valid\n' in output and "warning" not in output
 	assert result, "Please also fix all warnings\n\n" + output
 	return(True,"Passed Validation!")
+
+# read in vcf file
+def read_vcf(path):
+    with open(path, 'r') as f:
+        lines = [l for l in f if not l.startswith('##')]
+    return pd.read_table(
+        io.StringIO(''.join(lines)))
+
+
+
+
 
 
 def validate_yaml(submission_filepath, template_filepath="../TESLA_YAML.yaml"):
@@ -354,7 +369,8 @@ def validate_VAR_ID(submission1_filepath, submission3_filepath, submissionvcf_fi
 		for i in foo:
 			if i.startswith("#CHROM"):
 				headers = i.replace("\n","").split("\t")
-	submissionvcf = pd.read_csv(submissionvcf_filepath, sep="\t",comment="#",header=None,names=headers)
+	#submissionvcf = pd.read_csv(submissionvcf_filepath, sep="\t",comment="#",header=None,names=headers)
+	submissionvcf = read_vcf(submissionvcf_filepath)
 	submission1 = pd.read_csv(submission1_filepath)
 	submission3 = pd.read_csv(submission3_filepath)
 	submissionvcf['ID'] = submissionvcf['ID'].apply(str)
