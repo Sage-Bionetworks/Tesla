@@ -75,37 +75,13 @@ goldstandard_path = CONFIG_DIR + "/goldstandard.csv"
 evaluation_queues = [
     # training
     {
-        'id': 9614042,
+        'id': 9614265,
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
         'goldstandard_path': training_goldstandard_path,
-        'patients': ["1", "2", "10", "103", "210"]
-    },
-    # testing
-    {
-        'id': 9614043,
-        'validation_func': TESLA_val.validate_files,
-        'scoring_func': get_auprc,
-        'goldstandard_path': testing_goldstandard_path,
-        'patients': ["4", "5", "7", "11", "12", "101", "212"]
-    },
-    # validation
-    {
-        'id': 9614044,
-        'validation_func': TESLA_val.validate_files,
-        'scoring_func': get_auprc,
-        'goldstandard_path': validation_goldstandard_path,
-        'patients': ["8", "9", "102"]
-    },
-    
-    #test
-    {
-        'id': 9614157,
-        'validation_func': TESLA_val.validate_files,
-        'scoring_func': get_auprc,
-        'goldstandard_path': goldstandard_path,
-        'patients': ["1", "2", "4", "5", "7", "8", "9", "10", "11", "12", "101", "102", "103", "212", "210"]
+        'patients': [str(x) for x in list(range(20,38))]
     }
+    
 ]
 evaluation_queue_by_id = {q['id']:q for q in evaluation_queues}
 
@@ -194,7 +170,7 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
     if os.path.exists(tesla_ranking):
         filelist.append(tesla_ranking)
     listHLA = HLA['classIHLAalleles'][HLA['patientId'] == int(patientId)]
-    validHLA = [i.split(",") for i in listHLA]
+    validHLA = [i.split(";") for i in listHLA]
     validHLA = reduce(operator.add, validHLA)
     validHLA = set([i.split("(")[0] for i in validHLA])
     validated, hasVCF, message = TESLA_val.validate_files(syn, filelist,patientId,validHLA,validatingBAM=False)

@@ -106,7 +106,6 @@ def validate_1_2(submission_filepath, validHLA):
 	checkType(submission, ['HLA_ALT_BINDING','HLA_REF_BINDING','SCORE','REF_ALLELE_EXP','ALT_ALLELE_EXP'], float, basename, optional=True)
 	checkDelimiter(submission, ['RANK_METRICS'], basename,allowed=[';',':',".","_","-"])
 	intSemiColonListCheck(submission, basename, 'PROT_POS')
-
 	assert all(submission[['PEP_LEN','REF_EPI_SEQ']].apply(lambda x: len(x['REF_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "%s: Length of REF_EPI_SEQ values must be equal to the PEP_LEN" % basename
 	assert all(submission[['PEP_LEN','ALT_EPI_SEQ']].apply(lambda x: len(x['ALT_EPI_SEQ']) == x['PEP_LEN'], axis=1)), "%s: Length of ALT_EPI_SEQ values must be equal to the PEP_LEN" % basename
 	assert all(submission['HLA_ALLELE'].apply(lambda x: x in validHLA)), "%s: HLA_ALLELE must be part of this list for this patient: %s" % (basename,", ".join(validHLA))
@@ -417,14 +416,14 @@ def validate_files(syn, filelist, patientId, validHLA, validatingBAM=False):
 
 def perform_validate(args):
 	syn = synapse_login()
-	metadataTable = syn.tableQuery('SELECT * FROM syn17063955')
+	metadataTable = syn.tableQuery('SELECT * FROM syn20505381')
 	metadata = metadataTable.asDataFrame()
 	HLA = metadata[['patientId','classIHLAalleles']][~metadata['classIHLAalleles'].isnull()]
 	HLA.drop_duplicates("classIHLAalleles",inplace=True)
 	patientIds = set(metadata['patientId'][~metadata['patientId'].isnull()].apply(int))
 	assert args.patientId in patientIds, "Patient Id must be in the metadata"
 	listHLA = HLA['classIHLAalleles'][HLA['patientId'] == args.patientId]
-	validHLA = [i.split(",") for i in listHLA]
+	validHLA = [i.split(";") for i in listHLA]
 	final_validHLA = []
 	for i in validHLA:
 		final_validHLA.extend(i)
