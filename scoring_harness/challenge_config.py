@@ -11,8 +11,6 @@ import sys
 import re
 import operator
 import pandas as pd
-import rpy2.robjects as robjects
-#Python3 does not support reduce
 try:
     reduce
 except NameError:
@@ -31,54 +29,12 @@ ADMIN_USER_IDS = [3360851]
 
 CONFIG_DIR = os.path.dirname(os.path.realpath(sys.argv[0]))
 
-def get_auprc(submission, goldstandard_path):
-    submission_name = submission.entity.name
-    patient_id = re.sub("(\d+).+", "\\1", submission_name)
-    dirname = os.path.dirname(submission.entity.path)
-    zfile = zipfile.ZipFile(submission.filePath)
-    for name in zfile.namelist():
-        zfile.extract(name, dirname)
-    submission_path = os.path.join(dirname, 'TESLA_OUT_1.csv')
-    r_script_path = CONFIG_DIR + "/calculate_ranked_prauc.R"
-    robjects.r("source('%s')" % r_script_path)
-    calculate_ranked_AUPRC = robjects.r('calculate_ranked_AUPRC')
-    submission_df = pd.read_csv(submission_path)
-    submission_df = submission_df.loc[:, ["RANK", "HLA_ALLELE", "ALT_EPI_SEQ"]]
-    submission_df = submission_df.dropna()
-    goldstandard_df = pd.read_csv(goldstandard_path)
-    goldstandard_df["PATIENT"] = goldstandard_df["PATIENT"].astype('str')
-    goldstandard_df = goldstandard_df[goldstandard_df["PATIENT"] == patient_id]
-    goldstandard_df = goldstandard_df.loc[:, ["STATUS",
-                                              "HLA_ALLELE",
-                                              "ALT_EPI_SEQ"]] 
-    combined_df = pd.merge(submission_df, goldstandard_df, how='right')
-    combined_df = combined_df.sort_values(by='RANK')
-    combined_df = combined_df.loc[:, ["RANK", "STATUS"]]
-    if combined_df.shape[0] == 0:
-        return(0.0)
-    mask1 = combined_df["STATUS"] == "+"
-    mask0 = combined_df["STATUS"] == "-"
-    combined_df.loc[mask1, "STATUS"] = 1
-    combined_df.loc[mask0, "STATUS"] = 0
-    AUPRC = calculate_ranked_AUPRC(
-        robjects.FloatVector(combined_df["RANK"]),
-        robjects.FloatVector(combined_df["STATUS"]))
-    AUPRC = AUPRC[0]
-    return(AUPRC)
 
-
-training_goldstandard_path = CONFIG_DIR + "/training_goldstandard.csv"
-testing_goldstandard_path = CONFIG_DIR + "/testing_goldstandard.csv"
-validation_goldstandard_path = CONFIG_DIR + "/validation_goldstandard.csv"
-goldstandard_path = CONFIG_DIR + "/goldstandard.csv"
 
 evaluation_queues = [
-    # training
     {
         'id': 9614266,
         'validation_func': TESLA_val.validate_files,
-        'scoring_func': get_auprc,
-        'goldstandard_path': training_goldstandard_path,
         'patients': [str(i) for i in [1,2,3,4,5,10,11,12,14,15,16]]
     }
     
@@ -180,15 +136,3 @@ def validate_submission(syn, evaluation, submission, patientIds, HLA):
                 'hasVCF':hasVCF}
     return True, "Validation passed!", teamDict
 
-
-def score_submission(evaluation, submission):
-    """
-    Find the right scoring function and score the submission.
-
-    :returns: (score, message) where score is a dict of stats and message
-              is text for display to user
-    """
-    config = evaluation_queue_by_id[int(evaluation.id)]
-    score = config['scoring_func'](submission, config['goldstandard_path'])
-    #Make sure to round results to 3 or 4 digits
-    return (dict(auprc=round(score, 4)), "You did fine!")
