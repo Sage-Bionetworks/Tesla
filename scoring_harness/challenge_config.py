@@ -79,7 +79,7 @@ evaluation_queues = [
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
         'goldstandard_path': training_goldstandard_path,
-        'patients': [str(x) for x in list(range(20,38))]
+        'patients': [str(i) for i in [1,2,3,4,5,10,11,12,14,15,16]]
     }
     
 ]
