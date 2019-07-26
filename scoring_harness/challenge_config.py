@@ -75,7 +75,7 @@ goldstandard_path = CONFIG_DIR + "/goldstandard.csv"
 evaluation_queues = [
     # training
     {
-        'id': 9614265,
+        'id': 9614266,
         'validation_func': TESLA_val.validate_files,
         'scoring_func': get_auprc,
         'goldstandard_path': training_goldstandard_path,
