@@ -1,39 +1,96 @@
 library(RMySQL)
-library(synapseClient)
-synapseLogin()
+library(synapser)
+synLogin()
 
-START = as.Date("2017-07-06")
+START = as.Date("2019-01-01")
 DAYS_BEFORE = as.numeric(Sys.Date() - START)
 #set this environment variable in .Renviron
 datawareHousePW = Sys.getenv("SAGEDATAWAREHOUSEPW")
-mydb = dbConnect(MySQL(), user='tyu', password=datawareHousePW, host='warehouse.c95bbsvwbjlu.us-east-1.rds.amazonaws.com')
-#MUST UPDATE THE TABLE FIRST
-downloadReport1 = dbSendQuery(mydb, sprintf("SELECT PAR.ENTITY_ID, AR.USER_ID ,COUNT(*)
-                                     FROM warehouse.PROCESSED_ACCESS_RECORD PAR,
-                                     warehouse.ACCESS_RECORD AR,
-                                     (SELECT ID, CREATED_BY FROM warehouse.NODE_SNAPSHOT WHERE (ID, TIMESTAMP) IN (SELECT ID, TIMESTAMP FROM tyu.syn7362874)) AS NODE
-                                     WHERE PAR.SESSION_ID = AR.SESSION_ID
-                                     AND PAR.TIMESTAMP = AR.TIMESTAMP
-                                     AND PAR.ENTITY_ID = NODE.ID
-                                     AND PAR.NORMALIZED_METHOD_SIGNATURE IN ('GET /entity/#/file','GET /entity/#/version/#/file')
-                                     AND AR.TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (%d*24*60*60*1000) AND  unix_timestamp(curdate())*1000
-                                     GROUP BY PAR.ENTITY_ID, AR.USER_ID ;",DAYS_BEFORE))
+# Create node snapshot first
+# http://build-system-dw.sagebase.org:8080/job/Launch%20warehouse%20snapshot/
+# Fill out user and password with user and password set.
+# host and db is found in console output
+mydb = dbConnect(MySQL(),
+                 user = 'thomas',
+                 password = datawareHousePW,
+                 host = 'thomas-tesla-40.c95bbsvwbjlu.us-east-1.rds.amazonaws.com',
+                 db = 'warehouse')
+# Tries to list the tables
+dbListTables(mydb)
+createtable = dbSendQuery(mydb, "CREATE TABLE syn7362874
+                                 SELECT ID, MAX(TIMESTAMP) AS TIMESTAMP
+                                 FROM  NODE_SNAPSHOT
+                                 WHERE PROJECT_ID = 7362874
+                                 GROUP BY ID;")
 
-downloadReport1Data = fetch(downloadReport1, n=-1)
+truncatetable = dbSendQuery(mydb, "TRUNCATE TABLE syn7362874;")
+inserttable = dbSendQuery(mydb, "INSERT INTO syn7362874 (ID, TIMESTAMP)
+                                 SELECT ID, MAX(TIMESTAMP) AS TIMESTAMP
+                                 FROM  NODE_SNAPSHOT
+                                 WHERE PROJECT_ID = 7362874
+                                 GROUP BY ID;")
 
-downloadReport2 = dbSendQuery(mydb, sprintf('SELECT NODE.ID, FDR.USER_ID ,COUNT(*)
-                                    FROM warehouse.FILE_DOWNLOAD_RECORD FDR,
-                                    (SELECT ID, CREATED_BY FROM warehouse.NODE_SNAPSHOT WHERE (ID, TIMESTAMP) IN (SELECT ID, TIMESTAMP FROM tyu.syn7362874)) AS NODE
-                                    WHERE FDR.ASSOCIATION_OBJECT_ID = NODE.ID
-                                    AND FDR.ASSOCIATION_OBJECT_TYPE = "FileEntity"
-                                    AND FDR.TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (%d*24*60*60*1000) AND  unix_timestamp(curdate())*1000
-                                    GROUP BY NODE.ID, FDR.USER_ID;',DAYS_BEFORE))
+getQueryInfo <- function(mydb, DAYS_BEFORE) {
+  downloadReport1 = dbSendQuery(mydb, sprintf("SELECT PAR.ENTITY_ID, NODE.CREATED_BY, COUNT(*)
+                                             FROM PROCESSED_ACCESS_RECORD PAR,
+                                             (SELECT ID, CREATED_BY FROM NODE_SNAPSHOT WHERE (ID, TIMESTAMP) IN (SELECT ID, TIMESTAMP FROM syn7362874)) AS NODE
+                                             WHERE PAR.ENTITY_ID = NODE.ID
+                                             AND PAR.NORMALIZED_METHOD_SIGNATURE IN ('GET /entity/#/file','GET /entity/#/version/#/file')
+                                             AND TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (%d*24*60*60*1000) AND  unix_timestamp(curdate())*1000 - (%d*24*60*60*1000)
+                                             GROUP BY PAR.ENTITY_ID, NODE.CREATED_BY;", DAYS_BEFORE, DAYS_BEFORE-7))
+  
+  downloadReport1Data = fetch(downloadReport1, n=-1)
+  
+  
+  downloadReport2 = dbSendQuery(mydb, sprintf('SELECT NODE.ID, FDR.USER_ID ,COUNT(*)
+                                            FROM FILE_DOWNLOAD_RECORD FDR,
+                                            (SELECT ID, CREATED_BY FROM NODE_SNAPSHOT WHERE (ID, TIMESTAMP) IN (SELECT ID, TIMESTAMP FROM syn7362874)) AS NODE
+                                            WHERE FDR.ASSOCIATION_OBJECT_ID = NODE.ID
+                                            AND FDR.ASSOCIATION_OBJECT_TYPE = "FileEntity"
+                                            AND FDR.TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (%d*24*60*60*1000) AND  unix_timestamp(curdate())*1000 - (%d*24*60*60*1000)
+                                            GROUP BY NODE.ID, FDR.USER_ID;',DAYS_BEFORE, DAYS_BEFORE-7))
+  
+  downloadReport2Data = fetch(downloadReport2, n=-1)
+  downloadReport2Data$ENTITY_ID <- downloadReport2Data$ID
+  downloadReport2Data$ID <- NULL
+  downloadStats <- rbind(downloadReport1Data,
+                         downloadReport2Data)
+  return(downloadStats)
+}
 
-downloadReport2Data = fetch(downloadReport2, n=-1)
-downloadReport2Data$ENTITY_ID <- downloadReport2Data$ID
-downloadReport2Data$ID <- NULL
-downloadStats <- rbind(downloadReport1Data,
-          downloadReport2Data)
+downloadStats <- data.frame()
+while (DAYS_BEFORE - 7 > 0) {
+  downloadStats <- rbind(downloadStats,getQueryInfo(mydb, DAYS_BEFORE))
+  DAYS_BEFORE = DAYS_BEFORE - 7
+}
+
+# 
+# #MUST UPDATE THE TABLE FIRST
+# downloadReport1 = dbSendQuery(mydb, sprintf("SELECT PAR.ENTITY_ID, NODE.CREATED_BY, COUNT(*)
+#                                              FROM PROCESSED_ACCESS_RECORD PAR,
+#                                              (SELECT ID, CREATED_BY FROM NODE_SNAPSHOT WHERE (ID, TIMESTAMP) IN (SELECT ID, TIMESTAMP FROM syn7362874)) AS NODE
+#                                              WHERE PAR.ENTITY_ID = NODE.ID
+#                                              AND PAR.NORMALIZED_METHOD_SIGNATURE IN ('GET /entity/#/file','GET /entity/#/version/#/file')
+#                                              AND TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (%d*24*60*60*1000) AND  unix_timestamp(curdate())*1000
+#                                              GROUP BY PAR.ENTITY_ID, NODE.CREATED_BY;", DAYS_BEFORE))
+# 
+# downloadReport1Data = fetch(downloadReport1, n = -1)
+# 
+# downloadReport2 = dbSendQuery(mydb, sprintf('SELECT NODE.ID, FDR.USER_ID ,COUNT(*)
+#                                             FROM FILE_DOWNLOAD_RECORD FDR,
+#                                             (SELECT ID, CREATED_BY FROM NODE_SNAPSHOT WHERE (ID, TIMESTAMP) IN (SELECT ID, TIMESTAMP FROM syn20338157)) AS NODE
+#                                             WHERE FDR.ASSOCIATION_OBJECT_ID = NODE.ID
+#                                             AND FDR.ASSOCIATION_OBJECT_TYPE = "FileEntity"
+#                                             AND FDR.TIMESTAMP BETWEEN unix_timestamp(curdate())*1000 - (%d*24*60*60*1000) AND  unix_timestamp(curdate())*1000
+#                                             GROUP BY NODE.ID, FDR.USER_ID;',DAYS_BEFORE))
+# 
+# 
+# 
+# downloadReport2Data = fetch(downloadReport2, n=-1)
+# downloadReport2Data$ENTITY_ID <- downloadReport2Data$ID
+# downloadReport2Data$ID <- NULL
+# downloadStats <- rbind(downloadReport1Data,
+#           downloadReport2Data)
 
 NOT_FOUND_FILES = c(8303327,8303410,8077800,8077817,8077818,10156068,10166143,10166144,10166145,10166146,10166147,10166148)
 # downloadStats = downloadStats[!downloadStats$ENTITY_ID %in% NOT_FOUND_FILES,]
