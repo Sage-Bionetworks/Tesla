@@ -2,7 +2,7 @@ library(RMySQL)
 library(synapser)
 synLogin()
 
-START = as.Date("2019-01-01")
+START = as.Date("2019-07-01")
 DAYS_BEFORE = as.numeric(Sys.Date() - START)
 #set this environment variable in .Renviron
 datawareHousePW = Sys.getenv("SAGEDATAWAREHOUSEPW")
@@ -17,6 +17,8 @@ mydb = dbConnect(MySQL(),
                  db = 'warehouse')
 # Tries to list the tables
 dbListTables(mydb)
+# dbSendQuery(mydb, "DROP TABLE syn7362874;")
+
 createtable = dbSendQuery(mydb, "CREATE TABLE syn7362874
                                  SELECT ID, MAX(TIMESTAMP) AS TIMESTAMP
                                  FROM  NODE_SNAPSHOT
