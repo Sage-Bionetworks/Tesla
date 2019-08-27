@@ -231,12 +231,12 @@ def validateVCF(filePath):
 	lines = p.stdout.read().splitlines()
 	print(lines)
 	bad_lines = [
-		     line for line in lines 
+	             line for line in lines 
 		     if not re.match("^According to the VCF specification, the input file is valid$", line) 
-                     and not re.match("^Warning: Reference and alternate alleles do not share the first nucleotide.", line)
-                     and not re.match("Sample #[0-9]+ has [0-9]+ allele(s), but [0-9]+ were found in others", line)
+		     and not re.match("^Warning: Reference and alternate alleles do not share the first nucleotide.", line)
+		     and not re.match("^Line [0-9]+: Sample #[0-9]+ has [0-9]+ allele\(s\), but [0-9]+ were found in others \(warning\)$", line)
 		     and not re.match("^Reading from input file...", line)
-                    ]
+		    ]
 	print(bad_lines)
 	assert len(bad_lines) == 0, "Please also fix all warnings\n\n" + "\n".join(bad_lines)
 	return(True,"Passed Validation!")
