@@ -233,7 +233,7 @@ def validateVCF(filePath):
 	bad_lines = [
 	             line for line in lines 
 		     if not re.match("^According to the VCF specification, the input file is valid$", line) 
-		     and not re.match("^Warning: Reference and alternate alleles do not share the first nucleotide.", line)
+		     and not re.match("^Reference and alternate alleles do not share the first nucleotide \(warning\)", line)
 		     and not re.match("^Line [0-9]+: Sample #[0-9]+ has [0-9]+ allele\(s\), but [0-9]+ were found in others \(warning\)$", line)
 		     and not re.match("^Reading from input file...", line)
 		    ]
