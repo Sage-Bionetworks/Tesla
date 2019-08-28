@@ -110,7 +110,10 @@ teamDownloadStats <- apply(usersDownloadFile, 1, function(info){
 total = do.call(cbind, teamDownloadStats)
 teamsDownloaded <- t(total)
 write.csv(teamsDownloaded, "round3_download_statistics.csv", quote = F)
-
+files_downloaded_per_team = apply(teamsDownloaded, 2, sum)
+for (team in names(files_downloaded_per_team)) {
+  print(paste0(team, ": ", files_downloaded_per_team[team]))
+}
 #Number of teams downloaded data
 #Which teams have downloaded the data
 #Which ones haven't
