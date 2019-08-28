@@ -228,7 +228,7 @@ def validateVCF(filePath):
 		p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
 	except OSError as e:
 		raise ValueError('Please make sure docker is installed.')
-	lines = p.stdout.read().splitlines()
+	lines = p.stdout.read().decode().splitlines()
 	bad_lines = [
 		line for line in lines
 		if not re.match("^According to the VCF specification, the input file is valid$", line)
