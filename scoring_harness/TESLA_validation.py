@@ -228,9 +228,17 @@ def validateVCF(filePath):
 		p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
 	except OSError as e:
 		raise ValueError('Please make sure docker is installed.')
-	output = p.stdout.read().decode()
-	result = 'According to the VCF specification, the input file is valid\n' in output and "warning" not in output
-	assert result, "Please also fix all warnings\n\n" + output
+	lines = p.stdout.read().decode().splitlines()
+	bad_lines = [
+		line for line in lines
+		if not re.match("^According to the VCF specification, the input file is valid$", line)
+		and not re.match("^Line [0-9]+: Sample #[0-9]+ has [0-9]+ allele\(s\), but [0-9]+ were found in others \(warning\)", line)
+		and not re.match("^Line [0-9]+: Reference and alternate alleles do not share the first nucleotide \(warning\)", line)
+		and not re.match("^Reading from input file...", line)
+                and not re.match("^Lines read: [0-9]+", line)
+        ]
+	print(bad_lines)
+	assert len(bad_lines) == 0, "Please also fix all warnings\n\n" + "\n".join(bad_lines)
 	return(True,"Passed Validation!")
 
 
